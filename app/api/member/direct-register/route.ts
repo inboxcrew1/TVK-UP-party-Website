@@ -5,7 +5,7 @@ import { getConstituenciesByDistrict } from '../../../../lib/upConstituencies';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, phone, email, gender, age, govtIdType, govtIdNumber, photoPreview, stateName, districtName, assemblyName, referralCode } = body;
+    const { name, phone, email, dob, gender, age, govtIdType, govtIdNumber, photoPreview, stateName, districtName, assemblyName, referralCode } = body;
 
     if (!name || !phone) {
       return NextResponse.json({ error: 'Name and Mobile Number are required.' }, { status: 400 });
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
           mobile: phone,
           email: email || undefined,
           gender: gender || 'Male',
-          dob: new Date(1998, 0, 1),
+          dob: dob ? new Date(dob) : new Date(1998, 0, 1),
           photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
           stateId: stateObj.id,
           districtId: distObj.id,

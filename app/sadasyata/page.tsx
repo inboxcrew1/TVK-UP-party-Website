@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Shield, Users, CheckCircle2, Award, Phone, QrCode, Download, Share2, Sparkles, Flag, ArrowRight, UserCheck, Upload, CreditCard, Mail, Image as ImageIcon, MessageSquare, Check, FileCheck, FileText, MapPin, Home as HomeIcon, Search, RefreshCw, Layers, Eye, ChevronRight, X, Camera, FolderOpen } from 'lucide-react';
+import { Shield, Users, CheckCircle2, Award, Phone, QrCode, Download, Share2, Sparkles, Flag, ArrowRight, UserCheck, Upload, CreditCard, Mail, Image as ImageIcon, MessageSquare, Check, FileCheck, FileText, MapPin, Home as HomeIcon, Search, RefreshCw, Layers, Eye, ChevronRight, X, Camera, FolderOpen, Calendar } from 'lucide-react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import RealisticMemberCard from '../../components/RealisticMemberCard';
@@ -419,8 +419,9 @@ export default function SadasyataPage() {
     name: '',
     phone: '',
     email: '',
+    dob: '1998-08-15',
     gender: 'Male',
-    age: '25',
+    age: '26',
     govtIdType: 'Aadhaar Card',
     govtIdNumber: '',
     photoPreview: '',
@@ -1009,6 +1010,7 @@ export default function SadasyataPage() {
                       email={selectedCard.email}
                       gender={selectedCard.gender}
                       age={selectedCard.age}
+                      dob={selectedCard.dob}
                       govtIdType={selectedCard.govtIdType}
                       govtIdNumber={selectedCard.govtIdNumber}
                       photoPreview={selectedCard.photoPreview}
@@ -1160,6 +1162,51 @@ export default function SadasyataPage() {
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#A00000]"
                         />
+                      </div>
+                    </div>
+
+                    {/* DEDICATED DOB (DATE OF BIRTH) & GENDER SECTION */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-red-50/50 p-4 rounded-2xl border border-red-200">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-extrabold text-slate-800 block flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-[#A00000]" />
+                            <span>जन्म तिथि / Date of Birth (DOB) <span className="text-red-600">*</span></span>
+                          </span>
+                          <span className="text-[10px] text-[#A00000] font-mono font-bold">18+ Age Required</span>
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                          value={formData.dob}
+                          onChange={(e) => {
+                            const selectedDob = e.target.value;
+                            let computedAge = '26';
+                            if (selectedDob) {
+                              const birthYear = new Date(selectedDob).getFullYear();
+                              const currentYear = new Date().getFullYear();
+                              computedAge = String(Math.max(18, currentYear - birthYear));
+                            }
+                            setFormData((prev) => ({ ...prev, dob: selectedDob, age: computedAge }));
+                          }}
+                          className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#A00000]"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-extrabold text-slate-800 block">
+                          <span>लिंग / Gender <span className="text-red-600">*</span></span>
+                        </label>
+                        <select
+                          value={formData.gender}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, gender: e.target.value }))}
+                          className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#A00000]"
+                        >
+                          <option value="Male">पुरुष (Male)</option>
+                          <option value="Female">महिला (Female)</option>
+                          <option value="Other">अन्य (Other)</option>
+                        </select>
                       </div>
                     </div>
 
