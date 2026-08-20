@@ -19,6 +19,8 @@ export const LanguageOptions: LanguageOption[] = [
 
 export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   HI: {
+    membershipConsent: 'मैं टीवीके उत्तर प्रदेश को सदस्यता पंजीकरण, सत्यापन, सदस्यता आईडी/डिजिटल आईडी कार्ड जारी करने, रिकॉर्ड रखने तथा सदस्यता संबंधी संचार के लिए मेरी व्यक्तिगत जानकारी एकत्रित, सुरक्षित रखने और उपयोग करने की सहमति देता/देती हूँ। मैं पुष्टि करता/करती हूँ कि मेरे द्वारा दी गई जानकारी सही एवं सत्य है।',
+    consentError: 'कृपया अपना सदस्यता पंजीकरण पूरा करने के लिए सहमति स्वीकार करें।',
     home: 'होम',
     about: 'हमारे बारे में',
     leader: 'नेतृत्व',
@@ -162,6 +164,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   EN: {
+    membershipConsent: 'I consent to TVK Uttar Pradesh collecting, storing and using my personal information for membership registration, verification, Membership ID/Digital ID Card generation, record keeping and membership-related communication. I confirm that the information provided by me is true and correct.',
+    consentError: 'Please accept the consent to complete your membership registration.',
     home: 'Home',
     about: 'About Us',
     leader: 'Leadership',
@@ -305,6 +309,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   TA: {
+    membershipConsent: 'உறுப்பினர் பதிவு, சரிபார்ப்பு, உறுப்பினர் அடையாள அட்டை/டிஜிட்டல் அடையாள அட்டை உருவாக்கம், பதிவுகளை பராமரித்தல் மற்றும் உறுப்பினர் தொடர்பான தகவல்களைத் தொடர்புகொள்வதற்காக, நான் வழங்கும் எனது தனிப்பட்ட தகவல்களை TVK உத்தரப் பிரதேசம் சேகரித்து, சேமித்து, பயன்படுத்துவதற்கு நான் சம்மதிக்கிறேன். நான் வழங்கிய தகவல்கள் எனக்குத் தெரிந்தவரை உண்மையும் சரியானதுமாகும் என்பதை உறுதிப்படுத்துகிறேன்.',
+    consentError: 'உங்கள் உறுப்பினர் பதிவை முடிக்க தயவுசெய்து சம்மதத்தை ஏற்கவும்.',
     home: 'முகப்பு',
     about: 'எங்களைப் பற்றி',
     leader: 'தலைமை',
@@ -448,6 +454,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   TE: {
+    membershipConsent: 'సభ్యత్వ నమోదు, ధృవీకరణ, సభ్యత్వ ID/డిజిటల్ ID కార్డు రూపొందించడం, రికార్డులను నిర్వహించడం మరియు సభ్యత్వానికి సంబంధించిన సమాచారాన్ని తెలియజేయడం కోసం నేను అందించే నా వ్యక్తిగత సమాచారాన్ని TVK ఉత్తరప్రదేశ్ సేకరించడం, నిల్వ చేయడం మరియు ఉపయోగించడానికి నేను సమ్మతిస్తున్నాను. నేను అందించిన సమాచారం నా తెలిసిన మేరకు నిజమైనది మరియు సరైనదని ధృవీకరిస్తున్నాను.',
+    consentError: 'మీ సభ్యత్వ నమోదును పూర్తి చేయడానికి దయచేసి సమ్మతిని అంగీకరించండి.',
     home: 'హోమ్',
     about: 'మా గురించి',
     leader: 'నాయకత్వం',
@@ -591,6 +599,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   KN: {
+    membershipConsent: 'ಟಿವಿಕೆ ಉತ್ತರ ಪ್ರದೇಶವು ಸದಸ್ಯತ್ವ ನೋಂದಣಿ, ಪರಿಶೀಲನೆ, ಸದಸ್ಯತ್ವ ಐಡಿ/ಡಿಜಿಟಲ್ ಐಡಿ ಕಾರ್ಡ್ ರಚನೆ, ದಾಖಲೆ ನಿರ್ವಹಣೆ ಮತ್ತು ಸದಸ್ಯತ್ವ ಸಂಬಂಧಿತ ಸಂವಹನಕ್ಕಾಗಿ ನನ್ನ ವೈಯಕ್ತಿಕ ಮಾಹಿತಿಯನ್ನು ಸಂಗ್ರಹಿಸಲು, ಶೇಖರಿಸಲು ಮತ್ತು ಬಳಸಲು ನಾನು ಸಮ್ಮತಿಸುತ್ತೇನೆ. ನಾನು ನೀಡಿದ ಮಾಹಿತಿಯು ಸತ್ಯ ಮತ್ತು ಸರಿಯಾಗಿದೆ ಎಂದು ನಾನು ದೃಢೀಕರಿಸುತ್ತೇನೆ.',
+    consentError: 'ನಿಮ್ಮ ಸದಸ್ಯತ್ವ ನೋಂದಣಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು దయవిಟ್ಟು ಸಮ್ಮತಿಯನ್ನು ಒಪ್ಪಿಕೊಳ್ಳಿ.',
     home: 'ముఖ్య పుట',
     about: 'నమ్మ గురించి',
     leader: 'నాయకత్వ',
@@ -734,6 +744,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   ML: {
+    membershipConsent: 'അംഗത്വ രജിസ്ട്രേഷൻ, വെരിഫിക്കേഷൻ, അംഗത്വ ഐഡി/ഡിജിറ്റൽ ഐഡി കാർഡ് നിർമ്മാണം, റെക്കോർഡ് സൂക്ഷിക്കൽ, അംഗത്വവുമായി ബന്ധപ്പെട്ട വിവരവിനിമയം എന്നിവയ്ക്കായി എൻ്റെ വ്യക്തിഗത വിവരങ്ങൾ ശേഖരിക്കുന്നതിനും സൂക്ഷിക്കുന്നതിനും ഉപയോഗിക്കുന്നതിനും ഞാൻ ടിവികെ ഉത്തർപ്രദേശിന് സമ്മതം നൽകുന്നു. ഞാൻ നൽകിയ വിവരങ്ങൾ സത്യവും ശരിയുമാണെന്ന് ഞാൻ സ്ഥിരീകരിക്കുന്നു.',
+    consentError: 'നിങ്ങളുടെ അംഗത്വ രജിസ്ട്രേഷൻ പൂർത്തിയാക്കാൻ ദയവായി സമ്മതം സ്വീകരിക്കുക.',
     home: 'ഹോം',
     about: 'ഞങ്ങളെക്കുറിച്ച്',
     leader: 'നേതൃത്വം',
@@ -877,6 +889,8 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
 
   MR: {
+    membershipConsent: 'मी टीव्हीके उत्तर प्रदेशला सदस्यत्व नोंदणी, पडताळणी, सदस्यत्व आयडी/डिजिटल आयडी कार्ड जारी करणे, नोंद ठेवणे आणि सदस्यत्व संबंधित संवादासाठी माझी वैयक्तिक माहिती गोळा करणे, जतन करणे आणि वापरण्यास संमती देतो/देते. मी पुष्टी करतो/करते की मी दिलेली माहिती खरी आणि बरोबर आहे.',
+    consentError: 'आपली सदस्यत्व नोंदणी पूर्ण करण्यासाठी कृपया संमती स्वीकारा.',
     home: 'मुख्यपृष्ठ',
     about: 'आमच्याबद्दल',
     leader: 'नेतृत्व',

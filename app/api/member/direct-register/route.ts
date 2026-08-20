@@ -5,7 +5,7 @@ import { getConstituenciesByDistrict } from '../../../../lib/upConstituencies';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, phone, email, dob, gender, age, govtIdType, govtIdNumber, photoPreview, stateName, districtName, assemblyName, referralCode } = body;
+    const { name, phone, email, dob, gender, age, govtIdType, govtIdNumber, photoPreview, stateName, districtName, assemblyName, referralCode, consentGiven, consentTimestamp, consentLanguage } = body;
 
     if (!name || !phone) {
       return NextResponse.json({ error: 'Name and Mobile Number are required.' }, { status: 400 });
@@ -97,6 +97,9 @@ export async function POST(req: Request) {
       districtName: dist,
       assemblyName: ass,
       joinedAt: new Date().toLocaleDateString('en-IN'),
+      consentGiven: consentGiven ?? true,
+      consentTimestamp: consentTimestamp || new Date().toISOString(),
+      consentLanguage: consentLanguage || 'EN',
       smsConfirmation: smsMessage,
     });
   } catch (err) {

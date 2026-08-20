@@ -29,6 +29,8 @@ export default function SadasyataPage() {
   // Complete 7-Language Translation Dictionaries for Membership Page & Form
   const memI18n: Record<string, Record<string, string>> = {
     HI: {
+      membershipConsent: 'मैं टीवीके उत्तर प्रदेश को सदस्यता पंजीकरण, सत्यापन, सदस्यता आईडी/डिजिटल आईडी कार्ड जारी करने, रिकॉर्ड रखने तथा सदस्यता संबंधी संचार के लिए मेरी व्यक्तिगत जानकारी एकत्रित, सुरक्षित रखने और उपयोग करने की सहमति देता/देती हूँ। मैं पुष्टि करता/करती हूँ कि मेरे द्वारा दी गई जानकारी सही एवं सत्य है।',
+      consentError: 'कृपया अपना सदस्यता पंजीकरण पूरा करने के लिए सहमति स्वीकार करें।',
       heroBadge: 'टीवीके प्राथमिक सदस्यता पोर्टल',
       heroTitle: 'टीवीके उत्तर प्रदेश प्राथमिक सदस्यता पोर्टल',
       heroSub: 'एक मोबाइल नंबर से अधिकतम 10 सदस्यों का पंजीकरण करें। मोबाइल नंबर दर्ज करके उस नंबर से पंजीकृत सभी सदस्यों के डिजिटल QR पहचान-पत्र देखें एवं डाउनलोड करें।',
@@ -85,6 +87,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'वापस जाएं (Go Back)',
     },
     EN: {
+      membershipConsent: 'I consent to TVK Uttar Pradesh collecting, storing and using my personal information for membership registration, verification, Membership ID/Digital ID Card generation, record keeping and membership-related communication. I confirm that the information provided by me is true and correct.',
+      consentError: 'Please accept the consent to complete your membership registration.',
       heroBadge: 'TVK PRIMARY MEMBERSHIP PORTAL',
       heroTitle: 'TVK Uttar Pradesh Primary Membership Portal',
       heroSub: 'Register up to 10 family or booth members per mobile number. Enter your registered mobile number and system-generated ID to download your card.',
@@ -141,6 +145,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'Go Back',
     },
     TA: {
+      membershipConsent: 'உறுப்பினர் பதிவு, சரிபார்ப்பு, உறுப்பினர் அடையாள அட்டை/டிஜிட்டல் அடையாள அட்டை உருவாக்கம், பதிவுகளை பராமரித்தல் மற்றும் உறுப்பினர் தொடர்பான தகவல்களைத் தொடர்புகொள்வதற்காக, நான் வழங்கும் எனது தனிப்பட்ட தகவல்களை TVK உத்தரப் பிரதேசம் சேகரித்து, சேமித்து, பயன்படுத்துவதற்கு நான் சம்மதிக்கிறேன். நான் வழங்கிய தகவல்கள் எனக்குத் தெரிந்தவரை உண்மையும் சரியானதுமாகும் என்பதை உறுதிப்படுத்துகிறேன்.',
+      consentError: 'உங்கள் உறுப்பினர் பதிவை முடிக்க தயவுசெய்து சம்மதத்தை ஏற்கவும்.',
       heroBadge: 'தமிழக வெற்றிக் கழகம் முதன்மை உறுப்பினர் போர்ட்டல்',
       heroTitle: 'தமிழக வெற்றிக் கழகம் உத்திரப் பிரதேச உறுப்பினர் போர்ட்டல்',
       heroSub: 'ஒரு மொபைல் எண்ணில் 10 உறுப்பினர்கள் வரை பதிவு செய்யலாம். மொபைல் எண்ணை உள்ளிட்டு டிஜிட்டல் உறுப்பினர் அட்டைகளைப் பதிவிறக்கவும்.',
@@ -195,6 +201,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'பின்செல்லவும்',
     },
     TE: {
+      membershipConsent: 'సభ్యత్వ నమోదు, ధృవీకరణ, సభ్యత్వ ID/డిజిటల్ ID కార్డు రూపొందించడం, రికార్డులను నిర్వహించడం మరియు సభ్యత్వానికి సంబంధించిన సమాచారాన్ని తెలియజేయడం కోసం నేను అందించే నా వ్యక్తిగత సమాచారాన్ని TVK ఉత్తరప్రదేశ్ సేకరించడం, నిల్వ చేయడం మరియు ఉపయోగించడానికి నేను సమ్మతిస్తున్నాను. నేను అందించిన సమాచారం నా తెలిసిన మేరకు నిజమైనది మరియు సరైనదని ధృవీకరిస్తున్నాను.',
+      consentError: 'మీ సభ్యత్వ నమోదును పూర్తి చేయడానికి దయచేసి సమ్మతిని అంగీకరించండి.',
       heroBadge: 'టీవీకే ప్రాథమిక సభ్యత్వ పోర్టల్',
       heroTitle: 'టీవీకే ఉత్తర ప్రదేశ్ ప్రాథమిక సభ్యత్వ పోర్టల్',
       heroSub: 'ఒక మొబైల్ నంబర్‌తో గరిష్టంగా 10 మంది సభ్యులను నమోదు చేయండి. నంబర్‌ను నమోదు చేసి డిజిటల్ ఐడీ కార్డ్‌లను డౌన్‌లోడ్ చేయండి.',
@@ -249,6 +257,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'వెనక్కి వెళ్లండి',
     },
     KN: {
+      membershipConsent: 'ಟಿವಿಕೆ ಉತ್ತರ ಪ್ರದೇಶವು ಸದಸ್ಯತ್ವ ನೋಂದಣಿ, ಪರಿಶೀಲನೆ, ಸದಸ್ಯತ್ವ ಐಡಿ/ಡಿಜಿಟಲ್ ಐಡಿ ಕಾರ್ಡ್ ರಚನೆ, ದಾಖಲೆ ನಿರ್ವಹಣೆ ಮತ್ತು ಸದಸ್ಯತ್ವ ಸಂಬಂಧಿತ ಸಂವಹನಕ್ಕಾಗಿ ನನ್ನ ವೈಯಕ್ತಿಕ ಮಾಹಿತಿಯನ್ನು ಸಂಗ್ರಹಿಸಲು, ಶೇಖರಿಸಲು ಮತ್ತು ಬಳಸಲು ನಾನು ಸಮ್ಮತಿಸುತ್ತೇನೆ. ನಾನು ನೀಡಿದ ಮಾಹಿತಿಯು ಸತ್ಯ ಮತ್ತು ಸರಿಯಾಗಿದೆ ಎಂದು ನಾನು ದೃಢೀಕರಿಸುತ್ತೇನೆ.',
+      consentError: 'ನಿಮ್ಮ ಸದಸ್ಯತ್ವ ನೋಂದಣಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು దయవిಟ್ಟು ಸಮ್ಮತಿಯನ್ನು ಒಪ್ಪಿಕೊಳ್ಳಿ.',
       heroBadge: 'ಟಿವಿಕೆ ಪ್ರಾಥಮಿಕ ಸದಸ್ಯತ್ವ ಪೋರ್ಟಲ್',
       heroTitle: 'ಟಿವಿಕೆ ಉತ್ತರ ಪ್ರದೇಶ ಪ್ರಾಥಮಿಕ ಸದಸ್ಯತ್ವ ಪೋರ್ಟಲ್',
       heroSub: 'ಒಂದು ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯಲ್ಲಿ 10 ಸದಸ್ಯರವರೆಗೆ ನೋಂದಾಯಿಸಿ. ಡಿಜಿಟಲ್ ಐಡಿ ಕಾರ್ಡ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
@@ -303,6 +313,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'ಹಿಂದಕ್ಕೆ ಹೋಗಿ',
     },
     ML: {
+      membershipConsent: 'അംഗത്വ രജിസ്ട്രേഷൻ, വെരിഫിക്കേഷൻ, അംഗത്വ ഐഡി/ഡിജിറ്റൽ ഐഡി കാർഡ് നിർമ്മാണം, റെക്കോർഡ് സൂക്ഷിക്കൽ, അംഗത്വവുമായി ബന്ധപ്പെട്ട വിവരവിനിമയം എന്നിവയ്ക്കായി എൻ്റെ വ്യക്തിഗത വിവരങ്ങൾ ശേഖരിക്കുന്നതിനും സൂക്ഷിക്കുന്നതിനും ഉപയോഗിക്കുന്നതിനും ഞാൻ ടിവികെ ഉത്തർപ്രദേശിന് സമ്മതം നൽകുന്നു. ഞാൻ നൽകിയ വിവരങ്ങൾ സത്യവും ശരിയുമാണെന്ന് ഞാൻ സ്ഥിരീകരിക്കുന്നു.',
+      consentError: 'നിങ്ങളുടെ അംഗത്വ രജിസ്ട്രേഷൻ പൂർത്തിയാക്കാൻ ദയവായി സമ്മതം സ്വീകരിക്കുക.',
       heroBadge: 'ടിവികെ പ്രൈമറി അംഗത്വ പോർട്ടൽ',
       heroTitle: 'ടിവികെ ഉത്തർപ്രദേശ് പ്രൈമറി അംഗത്വ പോർട്ടൽ',
       heroSub: 'ഒരു മൊബൈൽ നമ്പറിൽ 10 അംഗങ്ങളെ വരെ രജിസ്റ്റർ ചെയ്യാം. ഡിജിറ്റൽ ഐഡി കാർഡുകൾ ഡൗൺലോഡ് ചെയ്യുക.',
@@ -357,6 +369,8 @@ export default function SadasyataPage() {
       cardBackBtn: 'തിരികെ പോകുക',
     },
     MR: {
+      membershipConsent: 'मी टीव्हीके उत्तर प्रदेशला सदस्यत्व नोंदणी, पडताळणी, सदस्यत्व आयडी/डिजिटल आयडी कार्ड जारी करणे, नोंद ठेवणे आणि सदस्यत्व संबंधित संवादासाठी माझी वैयक्तिक माहिती गोळा करणे, जतन करणे आणि वापरण्यास संमती देतो/देते. मी पुष्टी करतो/करते की मी दिलेली माहिती खरी आणि बरोबर आहे.',
+      consentError: 'आपली सदस्यत्व नोंदणी पूर्ण करण्यासाठी कृपया संमती स्वीकारा.',
       heroBadge: 'टीव्हीके प्राथमिक सदस्यत्व पोर्टल',
       heroTitle: 'टीव्हीके उत्तर प्रदेश प्राथमिक सदस्यत्व पोर्टल',
       heroSub: 'एका मोबाईल नंबरवर १० सदस्यांची नोंदणी करा. मोबाईल नंबर टाकून सर्व डिजिटल आयडी कार्ड डाउनलोड करा.',
@@ -436,7 +450,9 @@ export default function SadasyataPage() {
     assemblyName: '173 - Lucknow Central',
     referralCode: '',
     pledge: true,
+    consentChecked: false,
   });
+  const [consentErrorMsg, setConsentErrorMsg] = useState('');
 
   // Search by ID/Phone State
   const [searchQuery, setSearchQuery] = useState('');
@@ -566,6 +582,11 @@ export default function SadasyataPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.consentChecked) {
+      setConsentErrorMsg(ms.consentError || t('consentError'));
+      return;
+    }
+
     if (!formData.name.trim()) {
       alert(ms.fullNamePlaceholder);
       return;
@@ -603,7 +624,12 @@ export default function SadasyataPage() {
       const res = await fetch('/api/member/direct-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          consentGiven: true,
+          consentTimestamp: new Date().toISOString(),
+          consentLanguage: lang,
+        }),
       });
 
       const data = await res.json();
