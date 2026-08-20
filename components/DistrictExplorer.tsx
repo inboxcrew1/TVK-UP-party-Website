@@ -64,7 +64,7 @@ export default function DistrictExplorer() {
   }, [districtList]);
 
   return (
-    <section className="py-16 bg-[#F4F4F6] text-slate-900 border-t border-b border-slate-300 relative z-30 isolate select-none shadow-md overflow-hidden">
+    <section className="py-16 bg-[#F4F4F6] text-slate-900 border-t border-b border-slate-300 relative z-30 w-full select-none shadow-md overflow-hidden">
       
       {/* SOLID OPAQUE BACKDROP TO BLOCK ALL FIXED BACKGROUND GLOWS */}
       <div className="absolute inset-0 bg-[#F4F4F6] z-0 pointer-events-none" />

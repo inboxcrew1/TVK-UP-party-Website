@@ -52,10 +52,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#040105] text-slate-100 font-sans relative overflow-x-hidden">
-      {/* 1. ATMOSPHERIC RED-GOLD LASER LIGHT BEAMS */}
-      <div className="fixed top-0 left-0 w-[600px] h-[900px] bg-gradient-to-br from-[#E11D48]/25 via-[#800000]/15 to-transparent blur-3xl pointer-events-none z-0" />
-      <div className="fixed top-0 right-0 w-[600px] h-[900px] bg-gradient-to-bl from-[#E11D48]/25 via-[#A00000]/15 to-transparent blur-3xl pointer-events-none z-0" />
-      <div className="fixed bottom-0 left-1/3 w-[700px] h-[700px] bg-gradient-to-t from-red-950/20 via-amber-500/5 to-transparent blur-[200px] pointer-events-none z-0" />
+      {/* 1. ATMOSPHERIC RED-GOLD LASER LIGHT BEAMS (HERO SCOPED ONLY) */}
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-[#E11D48]/20 via-[#800000]/10 to-transparent blur-3xl pointer-events-none z-0 overflow-hidden" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#E11D48]/20 via-[#A00000]/10 to-transparent blur-3xl pointer-events-none z-0 overflow-hidden" />
 
       {/* 2. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.025] flex items-center justify-center">
