@@ -73,6 +73,25 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Admin login error:', error);
     const msg = error instanceof Error ? error.message : 'Login failed';
+
+    // Detect DATABASE_URL misconfiguration and return a clear actionable error
+    if (
+      msg.includes('invalid domain character') ||
+      msg.includes('Error parsing connection string') ||
+      msg.includes('database string is invalid') ||
+      msg.includes('P1001') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('connect ETIMEDOUT')
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Database connection failed. The DATABASE_URL environment variable on the server is misconfigured or missing. Please update it in your Hostinger Node.js environment settings with the correct Supabase connection string.',
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
