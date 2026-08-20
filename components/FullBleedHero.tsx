@@ -27,13 +27,13 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[580px] sm:min-h-[660px] md:min-h-[85vh] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-16 sm:pt-20">
-      {/* SEAMLESS 5-SECOND AUTO-SLIDING BACKGROUND CAROUSEL (NO UI SLIDER CONTROLS / NO TEXT MENTION) */}
-      <div className="absolute inset-0 z-0">
+    <section className="relative w-full min-h-[85vh] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:pb-0">
+      {/* DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
+      <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 bg-cover bg-[82%_25%] sm:bg-[75%_center] lg:bg-right transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 bg-cover bg-right transition-opacity duration-1000 ease-in-out ${
               idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             style={{ backgroundImage: `url('${slide}')` }}
@@ -41,16 +41,16 @@ export default function FullBleedHero() {
         ))}
       </div>
 
-      {/* SOPHISTICATED LIGHTER GRADIENT OVERLAY FOR MAXIMUM PICTURE VISIBILITY ON THE LEFT */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b lg:bg-gradient-to-r from-slate-950/75 via-slate-950/30 to-transparent/10 w-full lg:w-2/3 pointer-events-none" />
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/80 via-transparent/20 to-slate-950/20 pointer-events-none" />
+      {/* DESKTOP GRADIENT OVERLAY */}
+      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent w-2/3 pointer-events-none" />
+      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
 
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-        <div className="lg:col-span-8 xl:col-span-7 space-y-6 text-left">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-16 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+        <div className="lg:col-span-8 xl:col-span-7 space-y-5 lg:space-y-6 text-left">
           {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
-          <div className="inline-flex items-center gap-3 bg-slate-900/90 text-white px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
-            <div className="w-9 h-6 rounded overflow-hidden border border-amber-300 shadow shrink-0">
+          <div className="inline-flex items-center gap-3 bg-slate-900/90 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
+            <div className="w-8 h-5 sm:w-9 sm:h-6 rounded overflow-hidden border border-amber-300 shadow shrink-0">
               <img
                 src="/media/tvk_official_logo.jpg"
                 alt="TVK Official Flag Logo"
@@ -60,56 +60,76 @@ export default function FullBleedHero() {
             <span>आधिकारिक डिजिटल संगठन &bull; TVK {t('titleSub')}</span>
           </div>
 
+          {/* DEDICATED MOBILE HERO PICTURE CONTAINER — 100% VISIBLE ON PHONES */}
+          <div className="lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-amber-400/80 shadow-[0_0_30px_rgba(251,191,36,0.3)] relative bg-slate-950 group my-2">
+            {heroSlides.map((slide, idx) => (
+              <img
+                key={idx}
+                src={slide}
+                alt="TVK Uttar Pradesh Leadership & Flag Banner"
+                className={`absolute inset-0 w-full h-full object-cover sm:object-contain transition-opacity duration-1000 ease-in-out ${
+                  idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 pointer-events-none'
+                }`}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute bottom-2.5 left-3 right-3 text-left">
+              <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-slate-950/80 px-2 py-0.5 rounded border border-amber-400/40 backdrop-blur-sm">
+                TVK UTTAR PRADESH OFFICIAL BANNER
+              </span>
+            </div>
+          </div>
+
           {/* Main Heading with tracking-[0.14em] TVK Letter Spacing */}
           <div className="space-y-1">
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-[0.14em] text-white font-display leading-none drop-shadow-2xl">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-[0.14em] text-white font-display leading-none drop-shadow-2xl">
               TVK
             </h1>
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-white font-display leading-tight">
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-white font-display leading-tight">
               {t('titleSub')}
             </h2>
           </div>
 
           {/* Horizontal Gold Line Accent */}
-          <div className="w-36 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full shadow-lg" />
+          <div className="w-28 sm:w-36 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-full shadow-lg" />
 
           {/* Subheading Motto */}
-          <div className="text-xl sm:text-2xl font-black text-amber-300 font-display tracking-wide drop-shadow-md">
+          <div className="text-lg sm:text-2xl font-black text-amber-300 font-display tracking-wide drop-shadow-md">
             {t('motto')}
           </div>
 
           {/* Concise Supporting Statement */}
-          <p className="text-slate-200 text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-950/40 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-900/60 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
             {t('heroDesc')}
           </p>
 
           {/* DUAL ACTION CTA BUTTONS */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2 sm:pt-4">
             {/* Primary Red CTA Button Dynamic Translation */}
             <Link
               href="/sadasyata"
-              className="bg-gradient-to-r from-[#A00000] via-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600 text-white rounded-2xl p-4 shadow-2xl shadow-[#A00000]/50 transition-all hover:scale-105 flex items-center gap-4 border border-amber-400/50 group"
+              className="bg-gradient-to-r from-[#A00000] via-red-600 to-amber-500 hover:from-red-700 hover:to-amber-600 text-white rounded-2xl p-3.5 sm:p-4 shadow-2xl shadow-[#A00000]/50 transition-all hover:scale-105 flex items-center gap-3.5 sm:gap-4 border border-amber-400/50 group min-h-[48px]"
             >
-              <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Users className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="text-left">
-                <span className="block font-black text-base leading-tight">{t('joinTVK')}</span>
-                <span className="text-[11px] text-amber-200 font-bold block">{t('onlineMembership')}</span>
+                <span className="block font-black text-sm sm:text-base leading-tight">{t('joinTVK')}</span>
+                <span className="text-[10px] sm:text-[11px] text-amber-200 font-bold block">{t('onlineMembership')}</span>
               </div>
             </Link>
 
             {/* Secondary CTA Button: TVK Officer Portal */}
             <Link
               href="/admin/login"
-              className="bg-slate-900/90 hover:bg-slate-850 text-amber-300 border-2 border-amber-400/50 rounded-2xl p-4 shadow-xl transition-all hover:scale-105 flex items-center gap-4 backdrop-blur-md group"
+              className="bg-slate-900/90 hover:bg-slate-850 text-amber-300 border-2 border-amber-400/50 rounded-2xl p-3.5 sm:p-4 shadow-xl transition-all hover:scale-105 flex items-center gap-3.5 sm:gap-4 backdrop-blur-md group min-h-[48px]"
             >
-              <div className="w-11 h-11 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0 border border-amber-400/30">
-                <Shield className="w-6 h-6 text-amber-400" />
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0 border border-amber-400/30">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
               </div>
               <div className="text-left">
-                <span className="block font-black text-base leading-tight text-white">TVK Officer Portal</span>
-                <span className="text-[11px] text-amber-300 font-bold block">Admin Access & Verification</span>
+                <span className="block font-black text-sm sm:text-base leading-tight text-white">TVK Officer Portal</span>
+                <span className="text-[10px] sm:text-[11px] text-amber-300 font-bold block">Admin Access & Verification</span>
               </div>
             </Link>
           </div>
@@ -119,10 +139,10 @@ export default function FullBleedHero() {
       {/* SCROLL INDICATOR */}
       <a
         href="#stats-panel"
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-xs text-amber-300 font-bold uppercase tracking-wider hover:text-white transition-colors animate-bounce"
+        className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-[11px] sm:text-xs text-amber-300 font-bold uppercase tracking-wider hover:text-white transition-colors animate-bounce"
       >
         <span>{t('scrollDown')}</span>
-        <ChevronDown className="w-5 h-5 stroke-[3]" />
+        <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
       </a>
     </section>
   );
