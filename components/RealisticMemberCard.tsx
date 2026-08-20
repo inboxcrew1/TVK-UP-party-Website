@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { ShieldCheck, Download } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { ShieldCheck, Download, Printer, ImageIcon, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageCode } from '../lib/i18n';
 
@@ -45,6 +45,8 @@ export default function RealisticMemberCard({
 }: MemberCardProps) {
   const { lang } = useLanguage();
   const cardRef = useRef<HTMLDivElement>(null);
+  const [isDownloadingPng, setIsDownloadingPng] = useState(false);
+  const [isDownloadingJpg, setIsDownloadingJpg] = useState(false);
 
   const cityName = city || districtName || 'Lucknow';
   const displayDob = dob || (age ? `15/08/${2026 - parseInt(age || '25', 10)}` : '15/08/1994');
@@ -106,7 +108,7 @@ export default function RealisticMemberCard({
           issueLabel: 'ದಿನಾಂಕ (ISSUE)',
           validityLabel: 'ಆಜೀವ (LIFETIME)',
           sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'ಹುಟ್ಟಿನಿಂದ എല്ലാ മാനവരും സമਾਨರು',
+          sloganTranslated: 'ಹುಟ್ಟಿನಿಂದ ಎಲ್ಲಾ ಮಾನವರೂ ಸಮಾನರು',
         };
       case 'ML':
         return {
@@ -185,27 +187,126 @@ export default function RealisticMemberCard({
     }
   }, [membershipNumber, fullName, phone, email, gender, age, displayDob, photoPreview, cityName, districtName, stateName, joinedAt]);
 
-  // HIGH-RESOLUTION Standalone ID Card Print & Download (Exact 3.375in x 2.125in @ 300 DPI -> 1013px x 638px)
-  const handleDownloadStandaloneCard = () => {
+  // ============================================================
+  // HTML2CANVAS-BASED IMAGE DOWNLOAD (PNG / JPG)
+  // Captures the exact card DOM element at 3× pixel density
+  // → ~1440×907px for a crisp, print-quality image
+  // ============================================================
+  const downloadAsImage = async (format: 'png' | 'jpg') => {
     const cardElement = cardRef.current;
     if (!cardElement) return;
 
-    // Clone the card HTML and force-remove lazy loading so images appear in the popup
+    format === 'png' ? setIsDownloadingPng(true) : setIsDownloadingJpg(true);
+
+    try {
+      // Dynamically import html2canvas (client-only)
+      const html2canvas = (await import('html2canvas')).default;
+
+      // Pre-load all images in the card to make sure they are fully decoded
+      const images = Array.from(cardElement.querySelectorAll('img'));
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete && img.naturalWidth > 0) {
+                resolve();
+              } else {
+                img.onload = () => resolve();
+                img.onerror = () => resolve(); // continue even if one fails
+                // Force reload if not loaded
+                if (!img.src) resolve();
+              }
+            })
+        )
+      );
+
+      // Capture the card at 3× DPI for crisp print quality
+      // The card on screen is ~480px wide × ~302px tall
+      // At scale=3 → 1440px × 906px (excellent for printing at 300 DPI)
+      const canvas = await html2canvas(cardElement, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: null, // preserve card's own gradient background
+        imageTimeout: 8000,
+        onclone: (clonedDoc) => {
+          // In the clone, force all images to eager
+          const clonedImgs = clonedDoc.querySelectorAll('img');
+          clonedImgs.forEach((img) => {
+            img.setAttribute('loading', 'eager');
+            img.setAttribute('decoding', 'sync');
+          });
+        },
+      });
+
+      // Build the safe filename
+      const safeMemberId = membershipNumber.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
+      const filename = `TVK-UP-Membership-ID-${safeMemberId}.${format}`;
+
+      if (format === 'png') {
+        // PNG — lossless, sharpest text & borders
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          },
+          'image/png'
+        );
+      } else {
+        // JPG — high quality (0.95), smaller file
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          },
+          'image/jpeg',
+          0.95
+        );
+      }
+    } catch (err) {
+      console.error('Image download failed:', err);
+      alert('Image download failed. Please try the Print option instead.');
+    } finally {
+      format === 'png' ? setIsDownloadingPng(false) : setIsDownloadingJpg(false);
+    }
+  };
+
+  // ============================================================
+  // PRINT FUNCTION — Physical 3.375in × 2.125in card
+  // ============================================================
+  const handlePrint = () => {
+    const cardElement = cardRef.current;
+    if (!cardElement) return;
+
     const cardHtml = cardElement.outerHTML
       .replace(/loading="lazy"/g, 'loading="eager"')
       .replace(/loading='lazy'/g, "loading='eager'");
 
     const printWindow = window.open('', '_blank', 'width=1050,height=680');
     if (!printWindow) {
-      // Fallback: open blocked by browser — tell user to allow popups
-      alert('Please allow popups for this site to download your ID card. Then click the download button again.');
+      alert('Please allow popups for this site to use Print. Then click Print again.');
       return;
     }
 
     printWindow.document.write(`<!DOCTYPE html>
 <html>
   <head>
-    <title>TVK_UP_Member_Card_${membershipNumber.replace(/\s+/g, '_')}</title>
+    <title>Print_TVK_UP_Card_${membershipNumber.replace(/\s+/g, '_')}</title>
     <script src="https://cdn.tailwindcss.com"><\/script>
     <style>
       @page { size: 3.375in 2.125in; margin: 0; }
@@ -246,25 +347,19 @@ export default function RealisticMemberCard({
       ${cardHtml}
     </div>
     <script>
-      // Wait for images to load before printing
       var imgs = document.querySelectorAll('img');
       var total = imgs.length;
       var loaded = 0;
       function tryPrint() {
         loaded++;
-        if (loaded >= total) {
-          setTimeout(function() { window.print(); }, 150);
-        }
+        if (loaded >= total) { setTimeout(function() { window.print(); }, 150); }
       }
       if (total === 0) {
         setTimeout(function() { window.print(); }, 200);
       } else {
         imgs.forEach(function(img) {
-          if (img.complete) { tryPrint(); }
-          else {
-            img.onload = tryPrint;
-            img.onerror = tryPrint;
-          }
+          if (img.complete && img.naturalWidth > 0) { tryPrint(); }
+          else { img.onload = tryPrint; img.onerror = tryPrint; }
         });
       }
     <\/script>
@@ -289,7 +384,7 @@ export default function RealisticMemberCard({
           <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Official TVK Flag Logo */}
             <div className="w-10 sm:w-12 h-6 sm:h-7 rounded border-2 border-amber-300 shadow-md overflow-hidden shrink-0 bg-slate-950 flex items-center justify-center">
-              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
+              <img loading="eager" decoding="sync" src="/media/tvk_official_logo.jpg"
                 alt="Official TVK Flag Logo"
                 className="w-full h-full object-cover"
               />
@@ -316,7 +411,7 @@ export default function RealisticMemberCard({
         <div className="relative z-10 grid grid-cols-12 gap-2.5 sm:gap-3.5 items-center my-auto">
           {/* Passport Photo Frame */}
           <div className="col-span-4 aspect-[4/5] rounded-xl bg-slate-800 border-2 border-amber-400 shadow-md overflow-hidden shrink-0 relative">
-            <img loading="lazy" decoding="async" src={photoPreview || '/media/leadership.jpg'}
+            <img loading="eager" decoding="sync" src={photoPreview || '/media/leadership.jpg'}
               alt={fullName}
               className="w-full h-full object-cover"
             />
@@ -363,7 +458,7 @@ export default function RealisticMemberCard({
             maskImage: 'radial-gradient(circle at 75% 50%, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 85%)',
           }}
         >
-          <img loading="lazy" decoding="async" src="/media/thalapathy_vijay_watermark.jpg"
+          <img loading="eager" decoding="sync" src="/media/thalapathy_vijay_watermark.jpg"
             alt="Thalapathy Vijay Official Watermark"
             className="w-full h-full object-cover object-top"
             onError={(e) => { (e.target as HTMLImageElement).src = '/media/leadership.jpg'; }}
@@ -381,15 +476,55 @@ export default function RealisticMemberCard({
         </div>
       </div>
 
-      {/* STANDALONE CARD DOWNLOAD BUTTON */}
+      {/* ============================================================
+          DOWNLOAD BUTTONS — Outside the card, never captured in image
+          ============================================================ */}
       {showDownloadButton && (
-        <button
-          onClick={handleDownloadStandaloneCard}
-          className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-6 py-3 rounded-xl text-xs flex items-center gap-2 shadow-xl transition-all hover:scale-105"
-        >
-          <Download className="w-4 h-4 stroke-[2.5]" />
-          <span>DOWNLOAD ID CARD (3.375" x 2.125")</span>
-        </button>
+        <div className="flex flex-wrap justify-center gap-3 w-full max-w-[480px]">
+
+          {/* PRIMARY: Download PNG */}
+          <button
+            onClick={() => downloadAsImage('png')}
+            disabled={isDownloadingPng || isDownloadingJpg}
+            className="flex-1 min-w-[140px] bg-amber-400 hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 font-black px-4 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xl transition-all hover:scale-105 active:scale-95"
+          >
+            {isDownloadingPng ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /><span>Generating...</span></>
+            ) : (
+              <><Download className="w-4 h-4 stroke-[2.5]" /><span>Download PNG</span></>
+            )}
+          </button>
+
+          {/* SECONDARY: Download JPG */}
+          <button
+            onClick={() => downloadAsImage('jpg')}
+            disabled={isDownloadingPng || isDownloadingJpg}
+            className="flex-1 min-w-[120px] bg-slate-700 hover:bg-slate-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black px-4 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 border border-slate-600"
+          >
+            {isDownloadingJpg ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /><span>Generating...</span></>
+            ) : (
+              <><ImageIcon className="w-4 h-4" /><span>Download JPG</span></>
+            )}
+          </button>
+
+          {/* TERTIARY: Print (physical 3.375×2.125in) */}
+          <button
+            onClick={handlePrint}
+            disabled={isDownloadingPng || isDownloadingJpg}
+            className="flex-1 min-w-[100px] bg-slate-800 hover:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed text-amber-300 font-black px-4 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 border border-amber-400/40"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print ID</span>
+          </button>
+        </div>
+      )}
+
+      {/* Helper text */}
+      {showDownloadButton && (
+        <p className="text-[10px] text-slate-400 text-center max-w-[480px] font-mono">
+          PNG = sharpest quality for digital use &bull; JPG = smaller file &bull; Print = exact 3.375&quot; × 2.125&quot; physical card
+        </p>
       )}
     </div>
   );
