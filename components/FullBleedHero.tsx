@@ -17,61 +17,52 @@ const heroSlides = [
 export default function FullBleedHero() {
   const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isDesktop, setIsDesktop] = useState(false);
 
-  // Detect screen size on mount & resize
+  // Auto slide background every 5 seconds (5000ms)
   useEffect(() => {
-    const checkScreen = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    checkScreen();
-    window.addEventListener('resize', checkScreen);
-    return () => window.removeEventListener('resize', checkScreen);
-  }, []);
-
-  // Auto slide background every 5 seconds (only active on desktop)
-  useEffect(() => {
-    if (!isDesktop) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [isDesktop]);
+  }, []);
 
   return (
     <section className="relative w-full lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
       
-      {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (ONLY RENDERED ON DESKTOP ≥1024px) */}
-      {isDesktop && (
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          {heroSlides.map((slide, idx) => (
-            <div
-              key={idx}
-              className={`absolute inset-0 bg-cover bg-right transition-opacity duration-1000 ease-in-out ${
-                idx === currentSlide ? 'opacity-100' : 'opacity-0'
-              }`}
-              style={{ backgroundImage: `url('${slide}')` }}
-            />
-          ))}
-          {/* DESKTOP GRADIENT OVERLAYS */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/65 to-transparent w-2/3" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30" />
-        </div>
-      )}
+      {/* 1. DESKTOP BACKGROUND SLIDER (ONLY RENDERED ON DESKTOP ≥1024px) */}
+      <div className="absolute inset-0 z-0 hidden lg:block pointer-events-none">
+        {heroSlides.map((slide, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 bg-cover bg-right transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ backgroundImage: `url('${slide}')` }}
+          />
+        ))}
+        {/* DESKTOP GRADIENT OVERLAYS */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/65 to-transparent w-2/3" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30" />
+      </div>
 
-      {/* 2. SINGLE AUTHORITATIVE CONTENT GRID */}
+      {/* 2. AUTHORITATIVE CONTENT GRID */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
           
-          {/* UNCROPPED MOBILE HERO PICTURE BANNER (< 1024px) — STABLE, NO ROTATION, NO CROP */}
+          {/* UNCROPPED MOBILE HERO PICTURE SLIDER (< 1024px) — MATCHES REFERENCE SCREENSHOT EXACTLY */}
           <div className="lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-2 shadow-2xl">
-            <img
-              loading="eager"
-              decoding="async"
-              src="/media/hero_slider_tvk_up.jpg"
-              alt="TVK Uttar Pradesh Official Hero Banner"
-              className="w-full h-full object-cover sm:object-contain"
-            />
+            {heroSlides.map((slide, idx) => (
+              <img
+                key={idx}
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                src={slide}
+                alt="TVK Uttar Pradesh Official Hero Banner"
+                className={`absolute inset-0 w-full h-full object-cover sm:object-contain transition-opacity duration-1000 ease-in-out ${
+                  idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 pointer-events-none'
+                }`}
+              />
+            ))}
           </div>
 
           {/* Main Heading with tracking-[0.14em] TVK Letter Spacing */}
