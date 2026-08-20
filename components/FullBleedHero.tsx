@@ -27,7 +27,7 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[780px] sm:min-h-[860px] md:min-h-[920px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-16 lg:py-0">
+    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
       {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
       <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
@@ -45,24 +45,8 @@ export default function FullBleedHero() {
       <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent w-2/3 pointer-events-none" />
       <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
 
-      {/* 2. MOBILE & TABLET RESPONSIVE UNCROPPED HERO BACKGROUND (< 1024px) */}
-      <div className="absolute inset-0 z-0 block lg:hidden">
-        {heroSlides.map((slide, idx) => (
-          <div
-            key={idx}
-            className={`absolute inset-0 bg-[length:100%_auto] sm:bg-contain bg-top bg-no-repeat transition-opacity duration-1000 ease-in-out ${
-              idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-            style={{ backgroundImage: `url('${slide}')` }}
-          />
-        ))}
-      </div>
-
-      {/* MOBILE GRADIENT OVERLAY (SMOOTH TRANSITION BELOW UNCROPPED MOBILE ARTWORK) */}
-      <div className="absolute inset-0 z-10 block lg:hidden bg-gradient-to-b from-slate-950/30 via-slate-950/80 to-slate-950 pointer-events-none" />
-
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-52 sm:pt-64 md:pt-80 lg:pt-24 pb-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
           {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
           <div className="inline-flex items-center gap-2.5 sm:gap-3 bg-slate-900/95 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
@@ -76,6 +60,28 @@ export default function FullBleedHero() {
               />
             </div>
             <span>आधिकारिक डिजिटल संगठन &bull; TVK {t('titleSub')}</span>
+          </div>
+
+          {/* DEDICATED MOBILE HERO PICTURE BANNER — 100% UNCROPPED FULL VISIBILITY ON PHONES */}
+          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.35)] relative bg-slate-950 my-2 group">
+            {heroSlides.map((slide, idx) => (
+              <img
+                key={idx}
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                src={slide}
+                alt="TVK Uttar Pradesh Official Hero Banner"
+                className={`absolute inset-0 w-full h-full object-cover sm:object-contain transition-opacity duration-1000 ease-in-out ${
+                  idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 pointer-events-none'
+                }`}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute bottom-2 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
+              <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-slate-950/85 px-2.5 py-0.5 rounded-lg border border-amber-400/40 backdrop-blur-sm shadow-md">
+                TVK UTTAR PRADESH OFFICIAL BANNER
+              </span>
+            </div>
           </div>
 
           {/* Main Heading with tracking-[0.14em] TVK Letter Spacing */}
@@ -97,7 +103,7 @@ export default function FullBleedHero() {
           </div>
 
           {/* Concise Supporting Statement */}
-          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-950/80 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-900/80 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
             {t('heroDesc')}
           </p>
 
