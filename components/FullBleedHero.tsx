@@ -27,7 +27,7 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
+    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-24 sm:pt-28 lg:pt-0 pb-12 lg:pb-0">
       {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
       <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
@@ -63,7 +63,7 @@ export default function FullBleedHero() {
           </div>
 
           {/* DEDICATED MOBILE HERO PICTURE BANNER — 100% UNCROPPED FULL VISIBILITY ON PHONES */}
-          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.35)] relative bg-slate-950 my-2 group">
+          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.35)] relative bg-slate-950 mt-3 sm:mt-4 mb-3 group">
             {heroSlides.map((slide, idx) => (
               <img
                 key={idx}
