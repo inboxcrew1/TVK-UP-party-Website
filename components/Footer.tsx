@@ -136,8 +136,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-b border-slate-800/80 pb-10">
           <div className="lg:col-span-7 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)] bg-slate-950 shrink-0 p-0.5">
-              <img
-                src="/media/tvk_official_logo.jpg"
+              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
                 alt="TVK Official Logo"
                 className="w-full h-full object-cover rounded-xl"
               />

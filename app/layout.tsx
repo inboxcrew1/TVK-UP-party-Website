@@ -56,6 +56,9 @@ export default function RootLayout({
   return (
     <html lang="hi" className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <title>TVK Uttar Pradesh | Tamizhaga Vettri Kazhagam – Uttar Pradesh</title>
         <meta name="description" content="TVK Uttar Pradesh — official digital platform for primary membership registration, district cadre explorer, leadership, ideology, and updates of Tamizhaga Vettri Kazhagam in UP." />
         <meta name="keywords" content="TVK Uttar Pradesh, TVK UP, TVK party Uttar Pradesh, Tamizhaga Vettri Kazhagam Uttar Pradesh, TVK UP membership, TVK membership registration, Thalapathy Vijay UP, TVK UP leadership, TVK UP districts, TVK UP 2027" />

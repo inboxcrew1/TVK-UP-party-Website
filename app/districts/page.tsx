@@ -79,7 +79,7 @@ export default function DistrictsPage() {
 
       {/* 2. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12">

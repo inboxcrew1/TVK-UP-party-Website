@@ -59,7 +59,7 @@ export default function Home() {
 
       {/* 2. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.025] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       {/* HEADER WITH GLOBAL 7-LANGUAGE SELECTOR */}
@@ -118,8 +118,7 @@ export default function Home() {
 
           <div className="lg:col-span-6 flex justify-center">
             <div className="relative w-full max-w-lg aspect-[4/3] rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(225,29,72,0.4)] border-4 border-[#FFC72C]/80 bg-slate-950 group">
-              <img
-                src="/media/puducherry_campaign.jpg"
+              <img loading="lazy" decoding="async" src="/media/puducherry_campaign.jpg"
                 alt="TVK Uttar Pradesh State Assembly Rally"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />

@@ -152,8 +152,7 @@ function VerificationContent() {
       <div className="bg-slate-900 border-2 border-amber-400/60 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
         {/* OFFICIAL TVK FLAG LOGO EMBLEM */}
         <div className="w-20 h-12 rounded-lg border-2 border-amber-400 overflow-hidden shadow-xl mx-auto bg-slate-950">
-          <img
-            src="/media/tvk_official_logo.jpg"
+          <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
             alt="Official TVK Flag Logo"
             className="w-full h-full object-cover"
           />

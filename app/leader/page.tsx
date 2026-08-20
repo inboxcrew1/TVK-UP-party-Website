@@ -79,8 +79,7 @@ export default function LeaderPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 flex justify-center">
               <div className="relative w-full max-w-md aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-400 bg-slate-900">
-                <img
-                  src="/media/leadership.jpg"
+                <img loading="lazy" decoding="async" src="/media/leadership.jpg"
                   alt="C. Joseph Vijay TVK Founder & President"
                   className="w-full h-full object-cover"
                 />
@@ -136,7 +135,7 @@ export default function LeaderPage() {
                 >
                   <div className="space-y-3">
                     <div className="w-full aspect-[4/3] rounded-2xl bg-slate-950 border border-amber-400/60 overflow-hidden shadow-md">
-                      <img src={leader.photoUrl} alt={leader.name} className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={leader.photoUrl} alt={leader.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-white">{leader.name}</h4>

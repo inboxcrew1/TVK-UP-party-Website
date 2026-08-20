@@ -233,8 +233,7 @@ export default function RealisticMemberCard({
           <div className="flex items-center gap-2.5">
             {/* Official TVK Flag Logo */}
             <div className="w-12 h-7 rounded border-2 border-amber-300 shadow-md overflow-hidden shrink-0 bg-slate-950 flex items-center justify-center">
-              <img
-                src="/media/tvk_official_logo.jpg"
+              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
                 alt="Official TVK Flag Logo"
                 className="w-full h-full object-cover"
               />
@@ -261,8 +260,7 @@ export default function RealisticMemberCard({
         <div className="relative z-10 grid grid-cols-12 gap-3.5 items-center my-auto">
           {/* Passport Photo Frame */}
           <div className="col-span-4 aspect-[4/5] rounded-xl bg-slate-800 border-2 border-amber-400 shadow-md overflow-hidden shrink-0 relative">
-            <img
-              src={photoPreview || '/media/leadership.jpg'}
+            <img loading="lazy" decoding="async" src={photoPreview || '/media/leadership.jpg'}
               alt={fullName}
               className="w-full h-full object-cover"
             />
@@ -309,8 +307,7 @@ export default function RealisticMemberCard({
             maskImage: 'radial-gradient(circle at 75% 50%, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 85%)',
           }}
         >
-          <img
-            src="/media/thalapathy_vijay_watermark.jpg"
+          <img loading="lazy" decoding="async" src="/media/thalapathy_vijay_watermark.jpg"
             alt="Thalapathy Vijay Official Watermark"
             className="w-full h-full object-cover object-top"
             onError={(e) => { (e.target as HTMLImageElement).src = '/media/leadership.jpg'; }}

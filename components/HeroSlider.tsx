@@ -177,8 +177,7 @@ export default function HeroSlider() {
               idx === currentSlide ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 pointer-events-none'
             }`}
           >
-            <img
-              src={item.imageUrl}
+            <img loading="lazy" decoding="async" src={item.imageUrl}
               alt={item.imageAlt}
               className="w-full h-full object-cover object-center"
             />

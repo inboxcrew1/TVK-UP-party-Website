@@ -400,7 +400,7 @@ export default function GalleryPage() {
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12">
@@ -457,8 +457,7 @@ export default function GalleryPage() {
                     className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer"
                     onClick={() => setSelectedImage(item)}
                   >
-                    <img
-                      src={item.image}
+                    <img loading="lazy" decoding="async" src={item.image}
                       alt={titleText}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
@@ -527,7 +526,7 @@ export default function GalleryPage() {
 
               <div className="space-y-4">
                 <div className="w-full max-h-[60vh] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center">
-                  <img src={selectedImage.image} alt={selectedImage.title[lang] || selectedImage.title['HI']} className="w-full h-full object-contain" />
+                  <img loading="lazy" decoding="async" src={selectedImage.image} alt={selectedImage.title[lang] || selectedImage.title['HI']} className="w-full h-full object-contain" />
                 </div>
 
                 <div className="space-y-2">

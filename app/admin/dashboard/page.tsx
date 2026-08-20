@@ -997,8 +997,7 @@ export default function AdminDashboardPage() {
                                 className="w-12 h-12 rounded-lg bg-slate-850 border border-amber-400/40 overflow-hidden shrink-0 cursor-pointer hover:opacity-80 transition-all hover:scale-105 group relative"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={m.photoUrl || '/media/leadership.jpg'}
+                                <img loading="lazy" decoding="async" src={m.photoUrl || '/media/leadership.jpg'}
                                   alt={m.fullName}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -1187,8 +1186,7 @@ export default function AdminDashboardPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="flex flex-col items-center text-center space-y-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={verifiedResult.photoUrl || '/media/leadership.jpg'}
+                      <img loading="lazy" decoding="async" src={verifiedResult.photoUrl || '/media/leadership.jpg'}
                         alt={verifiedResult.fullName}
                         className="w-24 h-24 rounded-xl object-cover border-2 border-amber-400/60 shadow-lg"
                       />
@@ -1286,7 +1284,7 @@ export default function AdminDashboardPage() {
                                 title="Click to view photo preview"
                               >
                                 {b.photoUrl ? (
-                                  <img src={b.photoUrl} alt={b.name} className="w-full h-full object-cover" />
+                                  <img loading="lazy" decoding="async" src={b.photoUrl} alt={b.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <span className="text-amber-400 font-bold">{b.name[0]?.toUpperCase()}</span>
                                 )}
@@ -1388,8 +1386,7 @@ export default function AdminDashboardPage() {
                 {/* 1. TOP HEADER BANNER */}
                 <div className="bg-gradient-to-r from-[#800000] via-[#A00000] to-[#800000] px-3 py-2.5 text-center border-b-2 border-amber-400 shrink-0 relative z-10 text-white">
                   <div className="flex items-center justify-center gap-2">
-                    <img
-                      src="/media/tvk_official_logo.jpg"
+                    <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
                       alt="TVK Logo"
                       className="w-7 h-7 rounded-full border border-amber-300 shadow shrink-0"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -1409,8 +1406,7 @@ export default function AdminDashboardPage() {
                 <div className="p-3.5 flex flex-col items-center text-center space-y-2.5 flex-1 relative z-10">
                   {/* Photo Centered */}
                   <div className="w-24 h-28 rounded-xl bg-slate-100 border-2 border-amber-500 overflow-hidden shrink-0 shadow-md relative">
-                    <img
-                      src={selectedBearerCard.photoUrl || '/media/leadership.jpg'}
+                    <img loading="lazy" decoding="async" src={selectedBearerCard.photoUrl || '/media/leadership.jpg'}
                       alt={selectedBearerCard.name}
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/media/leadership.jpg'; }}
@@ -1520,8 +1516,7 @@ export default function AdminDashboardPage() {
 
               <div className="bg-slate-950 rounded-xl overflow-hidden border border-slate-850 p-2 flex flex-col items-center justify-center min-h-[250px] max-h-[70vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={previewMedia.url}
+                <img loading="lazy" decoding="async" src={previewMedia.url}
                   alt={previewMedia.memberName}
                   className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-md"
                   onError={(e) => {
@@ -1807,7 +1802,7 @@ export default function AdminDashboardPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
                       {bearerPhotoUrl ? (
-                        <img src={bearerPhotoUrl} alt="Bearer Photo Preview" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={bearerPhotoUrl} alt="Bearer Photo Preview" className="w-full h-full object-cover" />
                       ) : (
                         <ImageIcon className="w-8 h-8 text-slate-600" />
                       )}

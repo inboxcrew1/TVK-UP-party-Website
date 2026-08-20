@@ -51,8 +51,7 @@ export default function FullBleedHero() {
           {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
           <div className="inline-flex items-center gap-2.5 sm:gap-3 bg-slate-900/90 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
             <div className="w-8 h-5 sm:w-9 sm:h-6 rounded overflow-hidden border border-amber-300 shadow shrink-0">
-              <img
-                src="/media/tvk_official_logo.jpg"
+              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
                 alt="TVK Official Flag Logo"
                 className="w-full h-full object-cover"
               />

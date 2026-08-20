@@ -68,8 +68,7 @@ export default function HeroBanner() {
         {/* RIGHT COLUMN (55% Width): PURE, UNBLURRED, HIGH-RESOLUTION UPLOADED HERO PICTURE */}
         <div className="lg:col-span-6 relative flex justify-center lg:justify-end items-center z-10">
           <div className="relative w-full max-w-xl aspect-[16/9] md:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-            <img
-              src="/media/tvk_hero_official.jpg"
+            <img loading="eager" decoding="async" src="/media/tvk_hero_official.jpg"
               alt="C. Joseph Vijay TVK President Pure Official Hero Picture"
               className="w-full h-full object-cover object-center shadow-2xl transition-transform duration-500 hover:scale-105"
             />

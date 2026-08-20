@@ -746,7 +746,7 @@ export default function SadasyataPage() {
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       {/* Hero Header Banner */}
@@ -941,7 +941,7 @@ export default function SadasyataPage() {
                       >
                         <div className="flex items-center gap-3.5 w-full sm:w-auto">
                           <div className="w-14 h-16 rounded-xl bg-slate-900 border border-amber-400 overflow-hidden shrink-0">
-                            <img src={card.photoPreview || '/media/leadership.jpg'} alt={card.fullName} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={card.photoPreview || '/media/leadership.jpg'} alt={card.fullName} className="w-full h-full object-cover" />
                           </div>
                           <div>
                             <span className="text-xs font-black text-amber-300 font-mono block">{card.membershipNumber}</span>
@@ -1064,7 +1064,7 @@ export default function SadasyataPage() {
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <div className="w-24 h-28 bg-slate-200 border-2 border-amber-400 rounded-xl overflow-hidden shadow-md flex items-center justify-center shrink-0">
                           {formData.photoPreview ? (
-                            <img src={formData.photoPreview} alt="Passport Preview" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={formData.photoPreview} alt="Passport Preview" className="w-full h-full object-cover" />
                           ) : (
                             <div className="text-center p-2 text-slate-400">
                               <Upload className="w-6 h-6 mx-auto mb-1 text-slate-400" />

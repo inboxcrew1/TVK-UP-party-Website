@@ -91,7 +91,7 @@ export default function LeadershipPage() {
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-16">
@@ -100,8 +100,7 @@ export default function LeadershipPage() {
           
           {/* 90% VISIBILITY CINEMATIC TVK EMBLEM ARTWORK BACKGROUND LAYER */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <img
-              src="/media/leadership_flag_hero.jpg"
+            <img loading="eager" decoding="async" src="/media/leadership_flag_hero.jpg"
               alt="Cinematic TVK Flag Artwork"
               className="w-full h-full object-cover object-center opacity-90 filter contrast-110 brightness-100"
             />
@@ -133,8 +132,7 @@ export default function LeadershipPage() {
 
           <div className="lg:col-span-5 flex justify-center relative z-10">
             <div className="relative w-full max-w-sm aspect-[4/3] rounded-2xl border-4 border-[#FFC72C] shadow-[0_0_30px_rgba(255,199,44,0.4)] overflow-hidden bg-slate-950">
-              <img
-                src={centralLeaders[0].photoUrl}
+              <img loading="lazy" decoding="async" src={centralLeaders[0].photoUrl}
                 alt={centralLeaders[0].name}
                 className="w-full h-full object-cover"
               />
@@ -197,7 +195,7 @@ export default function LeadershipPage() {
                 <div>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-20 h-20 rounded-2xl bg-slate-950 border-2 border-[#FFC72C] overflow-hidden shrink-0 shadow-[0_0_15px_rgba(255,199,44,0.3)]">
-                      <img src={leader.photoUrl} alt={leader.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                      <img loading="lazy" decoding="async" src={leader.photoUrl} alt={leader.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                     </div>
                     <div>
                       <h4 className="font-extrabold text-base text-white group-hover:text-[#FFC72C] transition-colors">

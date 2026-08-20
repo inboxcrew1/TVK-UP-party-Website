@@ -353,7 +353,7 @@ According to the Election Commission of India's published results, TVK won 108 o
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-10">
@@ -363,8 +363,7 @@ According to the Election Commission of India's published results, TVK won 108 o
           
           {/* 70% VISIBILITY OFFICIAL TVK FLAG ARTWORK BACKGROUND LAYER */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <img
-              src="/media/about_flag_hero.jpg"
+            <img loading="eager" decoding="async" src="/media/about_flag_hero.jpg"
               alt="Official TVK Flag Artwork"
               className="w-full h-full object-cover object-center opacity-70 filter contrast-110 brightness-95"
             />
@@ -424,7 +423,7 @@ According to the Election Commission of India's published results, TVK won 108 o
 
                   {/* Subtle Background Watermark Graphic inside Card */}
                   <div className="absolute -bottom-6 -right-6 w-36 h-36 opacity-[0.04] pointer-events-none group-hover:opacity-[0.08] transition-opacity">
-                    <img src="/media/tvk_official_logo.jpg" alt="Emblem" className="w-full h-full object-contain filter invert" />
+                    <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="Emblem" className="w-full h-full object-contain filter invert" />
                   </div>
 
                   {/* Header Row */}

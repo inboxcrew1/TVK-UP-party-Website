@@ -369,7 +369,7 @@ export default function IdeologyPage() {
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
-        <img src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
+        <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-20">
@@ -378,8 +378,7 @@ export default function IdeologyPage() {
           
           {/* 70% VISIBILITY 5 IDEOLOGICAL MENTORS ARTWORK BACKGROUND LAYER */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <img
-              src="/media/ideology_mentors_hero.jpg"
+            <img loading="eager" decoding="async" src="/media/ideology_mentors_hero.jpg"
               alt="TVK 5 Ideological Guidance Mentors Artwork"
               className="w-full h-full object-cover object-top opacity-70 filter contrast-110 brightness-95"
             />
@@ -420,8 +419,7 @@ export default function IdeologyPage() {
           {/* Right Featured Mentors Card Frame */}
           <div className="lg:col-span-4 flex justify-center relative z-10">
             <div className="relative rounded-3xl overflow-hidden border-4 border-[#FFC72C] shadow-[0_0_40px_rgba(255,199,44,0.4)] bg-slate-950 group max-w-md">
-              <img
-                src="/media/ideology_mentors_hero.jpg"
+              <img loading="eager" decoding="async" src="/media/ideology_mentors_hero.jpg"
                 alt="TVK Ideological Guidance Leaders Banner"
                 className="w-full h-auto object-cover object-top group-hover:scale-105 transition-transform duration-700"
               />
@@ -472,8 +470,7 @@ export default function IdeologyPage() {
                     {/* Glowing Gold Sunburst Halo Backdrop */}
                     <div className="absolute w-32 h-32 rounded-full bg-amber-400/25 blur-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:bg-amber-400/40 transition-all duration-500" />
                     
-                    <img
-                      src={leader.image}
+                    <img loading="lazy" decoding="async" src={leader.image}
                       alt={leader.name}
                       className="w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] group-hover:scale-110 group-hover:brightness-105 transition-all duration-700 relative z-10"
                     />
@@ -546,8 +543,7 @@ export default function IdeologyPage() {
                     {/* PROMINENT BRIGHT OFFICIAL TVK PILLAR ILLUSTRATION IMAGE */}
                     {pillar.image && (
                       <div className="w-full h-48 md:h-52 rounded-2xl overflow-hidden border-2 border-amber-400/80 bg-slate-950 shadow-xl relative group-hover:border-amber-300 transition-colors flex items-center justify-center p-2">
-                        <img
-                          src={pillar.image}
+                        <img loading="lazy" decoding="async" src={pillar.image}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = pillar.fallback;
                           }}
