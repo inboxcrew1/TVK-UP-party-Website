@@ -27,7 +27,7 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
+    <section className="relative w-full lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-8 lg:py-0">
       {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
       <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
@@ -46,10 +46,10 @@ export default function FullBleedHero() {
       <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
 
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-8 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
           
-          {/* DEDICATED UNCROPPED MOBILE HERO PICTURE BANNER (NO BORDER, NO BADGE OVERLAY) */}
+          {/* CLEAN MOBILE HERO PICTURE BANNER (100% FULL VISIBILITY, UNCROPPED) */}
           <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-1 group">
             {heroSlides.map((slide, idx) => (
               <img
