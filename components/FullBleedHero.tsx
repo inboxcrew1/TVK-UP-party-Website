@@ -33,7 +33,7 @@ export default function FullBleedHero() {
         {heroSlides.map((slide, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 bg-cover bg-[center_top] sm:bg-center md:bg-right transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 bg-cover bg-[82%_25%] sm:bg-[75%_center] lg:bg-right transition-opacity duration-1000 ease-in-out ${
               idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             style={{ backgroundImage: `url('${slide}')` }}
@@ -42,11 +42,11 @@ export default function FullBleedHero() {
       </div>
 
       {/* SOPHISTICATED LIGHTER GRADIENT OVERLAY FOR MAXIMUM PICTURE VISIBILITY ON THE LEFT */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b md:bg-gradient-to-r from-slate-950/70 via-slate-950/40 to-transparent/20 w-full lg:w-2/3 pointer-events-none" />
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/90 via-transparent/40 to-slate-950/30 pointer-events-none" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-b lg:bg-gradient-to-r from-slate-950/75 via-slate-950/30 to-transparent/10 w-full lg:w-2/3 pointer-events-none" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/80 via-transparent/20 to-slate-950/20 pointer-events-none" />
 
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-6 py-16 md:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-6 text-left">
           {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
           <div className="inline-flex items-center gap-3 bg-slate-900/90 text-white px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
