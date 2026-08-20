@@ -1,0 +1,419 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User / Admin authentication and RBAC
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  adminUser AdminUser?
+}
+
+model AdminUser {
+  id            String         @id @default(uuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId        String
+  role          Role           @relation(fields: [roleId], references: [id])
+  scopes        AdminScope[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique // SUPER_ADMIN, NATIONAL_ADMIN, STATE_ADMIN, DISTRICT_ADMIN, etc.
+  description String?
+  permissions RolePermission[]
+  adminUsers  AdminUser[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique // view_members, create_member, etc.
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model AdminScope {
+  id          String    @id @default(uuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  stateId     String?
+  districtId  String?
+  assemblyId  String?
+  createdAt   DateTime  @default(now())
+}
+
+// Geographic hierarchy
+model State {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  code      String     @unique // e.g. UP, TN, IN
+  districts District[]
+  members   Member[]
+  createdAt DateTime   @default(now())
+}
+
+model District {
+  id         String     @id @default(uuid())
+  name       String
+  stateId    String
+  state      State      @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  assemblies Assembly[]
+  members    Member[]
+  createdAt  DateTime   @default(now())
+
+  @@unique([name, stateId])
+}
+
+model Assembly {
+  id         String   @id @default(uuid())
+  name       String
+  districtId String
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  members    Member[]
+  createdAt  DateTime @default(now())
+
+  @@unique([name, districtId])
+}
+
+model Block {
+  id         String   @id @default(uuid())
+  name       String
+  districtId String
+  createdAt  DateTime @default(now())
+
+  @@unique([name, districtId])
+}
+
+model Municipality {
+  id         String   @id @default(uuid())
+  name       String
+  districtId String
+  createdAt  DateTime @default(now())
+
+  @@unique([name, districtId])
+}
+
+model Ward {
+  id             String   @id @default(uuid())
+  name           String
+  municipalityId String
+  createdAt      DateTime @default(now())
+
+  @@unique([name, municipalityId])
+}
+
+model Booth {
+  id         String   @id @default(uuid())
+  name       String
+  assemblyId String
+  createdAt  DateTime @default(now())
+
+  @@unique([name, assemblyId])
+}
+
+// Member management
+model Member {
+  id             String   @id @default(uuid())
+  membershipId   String?  @unique // TVK-UP-00000001
+  fullName       String
+  dob            DateTime
+  gender         String
+  mobile         String   @unique
+  email          String?
+  photoUrl       String
+  stateId        String
+  state          State    @relation(fields: [stateId], references: [id])
+  districtId     String
+  district       District @relation(fields: [districtId], references: [id])
+  assemblyId     String
+  assembly       Assembly @relation(fields: [assemblyId], references: [id])
+  blockId        String?
+  wardId         String?
+  boothId        String?
+  membershipType String   @default("ORDINARY") // ORDINARY, ACTIVE_PARTNER, etc.
+  status         String   @default("SUBMITTED") // PENDING_OTP, SUBMITTED, UNDER_REVIEW, ACTIVE, REJECTED, SUSPENDED, CANCELLED, DELETED
+  joiningDate    DateTime @default(now())
+  approvedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  addresses MemberAddress[]
+  documents MemberDocument[]
+  consents  Consent[]
+  history   MembershipStatusHistory[]
+  idCard    IdCard?
+
+  @@index([membershipId])
+  @@index([mobile])
+  @@index([email])
+  @@index([status])
+  @@index([districtId])
+  @@index([assemblyId])
+}
+
+model MemberDocument {
+  id           String   @id @default(uuid())
+  memberId     String
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  documentType String   // Aadhaar, VoterID, Passport, etc.
+  documentNo   String   // Encrypted (AES-256-GCM)
+  fileUrl      String   // Private S3 URL
+  createdAt    DateTime @default(now())
+}
+
+model MemberAddress {
+  id        String   @id @default(uuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  address   String
+  pincode   String
+  createdAt DateTime @default(now())
+}
+
+model MembershipStatusHistory {
+  id        String   @id @default(uuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  oldStatus String
+  newStatus String
+  reason    String?
+  actorId   String?  // Admin User ID who changed it
+  createdAt DateTime @default(now())
+}
+
+model Consent {
+  id              String   @id @default(uuid())
+  memberId        String
+  member          Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  termsAccepted   Boolean
+  privacyAccepted Boolean
+  marketingOptIn  Boolean
+  createdAt       DateTime @default(now())
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  mobile    String
+  otp       String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([mobile])
+}
+
+// Party organisation
+model PartyPost {
+  id            String         @id @default(uuid())
+  title         String         @unique // e.g. State President, District Treasurer
+  scope         String         // NATIONAL, STATE, DISTRICT, ASSEMBLY
+  level         Int            @default(1)
+  description   String?
+  officeBearers OfficeBearer[]
+  createdAt     DateTime       @default(now())
+}
+
+model OfficeBearer {
+  id               String    @id @default(uuid())
+  name             String
+  photoUrl         String?
+  postId           String
+  post             PartyPost @relation(fields: [postId], references: [id])
+  stateId          String?
+  districtId       String?
+  assemblyId       String?
+  appointmentDate  DateTime  @default(now())
+  status           String    @default("ACTIVE") // ACTIVE, INACTIVE
+  publicVisibility Boolean   @default(true)
+  bio              String?
+  email            String?
+  mobile           String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// Statistics layer
+model MembershipCount {
+  id           String   @id @default(uuid())
+  scopeType    String   // INDIA, STATE, DISTRICT, ASSEMBLY, BLOCK, WARD, BOOTH
+  scopeId      String   // e.g. stateId, districtId or "INDIA"
+  activeCount  Int      @default(0)
+  pendingCount Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([scopeType, scopeId])
+}
+
+// Card and QR Verification
+model IdCard {
+  id           String   @id @default(uuid())
+  memberId     String   @unique
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  cardFrontUrl String
+  cardBackUrl  String
+  qrCodeUrl    String
+  generatedAt  DateTime @default(now())
+}
+
+model QrVerification {
+  id           String   @id @default(uuid())
+  membershipId String
+  scannedBy    String?  // If scanned by logged in user/admin
+  ipAddress    String?
+  userAgent    String?
+  success      Boolean
+  createdAt    DateTime @default(now())
+}
+
+// Content Management System (CMS)
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  slug      String   @unique
+  content   String
+  imageUrl  String?
+  category  String
+  author    String
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED, SCHEDULED
+  publishAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id               String   @id @default(uuid())
+  title            String
+  slug             String   @unique
+  description      String
+  imageUrl         String?
+  location         String
+  eventDate        DateTime
+  status           String   @default("DRAFT") // DRAFT, PUBLISHED
+  districtId       String?
+  assemblyId       String?
+  registrationLink String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model GalleryAlbum {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  category    String
+  images      GalleryImage[]
+  createdAt   DateTime       @default(now())
+}
+
+model GalleryImage {
+  id        String       @id @default(uuid())
+  albumId   String
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  caption   String?
+  altText   String?
+  order     Int          @default(0)
+  createdAt DateTime     @default(now())
+}
+
+// Operations & Queue Management
+model Notification {
+  id        String            @id @default(uuid())
+  recipient String            // Mobile number or email
+  type      String            // SMS, EMAIL, WHATSAPP
+  template  String
+  payload   String            // JSON string of parameters
+  status    String            @default("QUEUED") // QUEUED, SENT, FAILED
+  attempts  Int               @default(0)
+  logs      NotificationLog[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model NotificationLog {
+  id             String       @id @default(uuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  status         String
+  error          String?
+  createdAt      DateTime     @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actor     String   // Admin email or "SYSTEM" or "MEMBER"
+  action    String   // MEMBER_CREATE, MEMBER_APPROVE, EXCEL_EXPORT, etc.
+  entity    String   // Member, User, Setting, etc.
+  entityId  String?
+  oldValues String?  // JSON string
+  newValues String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime @default(now())
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model Import {
+  id          String   @id @default(uuid())
+  fileName    String
+  totalRows   Int
+  validRows   Int
+  invalidRows Int
+  duplicates  Int
+  importedBy  String
+  status      String   @default("PROCESSING") // PROCESSING, COMPLETED, FAILED
+  errorLog    String?
+  createdAt   DateTime @default(now())
+}
+
+model Export {
+  id          String   @id @default(uuid())
+  fileName    String
+  format      String   // XLSX, CSV
+  recordCount Int
+  filters     String   // JSON string of filters applied
+  exportedBy  String
+  createdAt   DateTime @default(now())
+}
+
+model BackgroundJob {
+  id        String   @id @default(uuid())
+  type      String   // BULK_CARD_GEN, EXCEL_IMPORT, STATS_REFRESH
+  payload   String   // JSON configuration
+  status    String   @default("QUEUED") // QUEUED, PROCESSING, COMPLETED, FAILED, RETRYING
+  attempts  Int      @default(0)
+  errorLog  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

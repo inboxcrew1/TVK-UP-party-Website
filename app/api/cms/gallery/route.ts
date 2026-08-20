@@ -1,0 +1,29 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '../../../../lib/prisma';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  try {
+    const albums = await prisma.galleryAlbum.findMany({
+      include: {
+        images: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      albums,
+    });
+  } catch (error) {
+    console.error('Fetch gallery albums error:', error);
+    return NextResponse.json({ error: 'Failed to fetch gallery albums.' }, { status: 500 });
+  }
+}
