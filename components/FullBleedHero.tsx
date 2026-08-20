@@ -27,30 +27,30 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-8 lg:py-0">
-      {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
-      <div className="absolute inset-0 z-0 hidden lg:block">
+    <section className="relative w-full lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
+      
+      {/* DESKTOP BACKGROUND IMAGE (ONLY VISIBLE AT LG BREAKPOINT ≥1024px) */}
+      <div className="absolute inset-0 z-0 hidden lg:block pointer-events-none">
         {heroSlides.map((slide, idx) => (
           <div
             key={idx}
             className={`absolute inset-0 bg-cover bg-right transition-opacity duration-1000 ease-in-out ${
-              idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              idx === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
             style={{ backgroundImage: `url('${slide}')` }}
           />
         ))}
+        {/* DESKTOP GRADIENT OVERLAYS */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/65 to-transparent w-2/3" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30" />
       </div>
 
-      {/* DESKTOP GRADIENT OVERLAY */}
-      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent w-2/3 pointer-events-none" />
-      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
-
-      {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-8 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center">
+      {/* SINGLE AUTHORITATIVE CONTENT GRID */}
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
           
-          {/* CLEAN MOBILE HERO PICTURE BANNER (100% FULL VISIBILITY, UNCROPPED) */}
-          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-1 group">
+          {/* MOBILE HERO PICTURE CARD — MATCHES SCREENSHOT 1 EXACTLY (< 1024px) */}
+          <div className="lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-2 shadow-2xl">
             {heroSlides.map((slide, idx) => (
               <img
                 key={idx}
@@ -84,7 +84,7 @@ export default function FullBleedHero() {
           </div>
 
           {/* Concise Supporting Statement */}
-          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-900/80 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-900/90 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
             {t('heroDesc')}
           </p>
 
