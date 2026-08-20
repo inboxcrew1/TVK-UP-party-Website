@@ -27,13 +27,13 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[640px] sm:min-h-[750px] md:min-h-[85vh] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-16 sm:pb-20 lg:pb-0">
-      {/* UNIFIED FULL-BLEED SLIDING BACKGROUND LAYER */}
-      <div className="absolute inset-0 z-0">
+    <section className="relative w-full min-h-[780px] sm:min-h-[860px] md:min-h-[920px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-16 lg:py-0">
+      {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
+      <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 bg-cover bg-[85%_20%] sm:bg-[78%_center] lg:bg-right transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 bg-cover bg-right transition-opacity duration-1000 ease-in-out ${
               idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             style={{ backgroundImage: `url('${slide}')` }}
@@ -41,17 +41,36 @@ export default function FullBleedHero() {
         ))}
       </div>
 
-      {/* RESPONSIVE GRADIENT OVERLAY (LEFT-TO-RIGHT ON DESKTOP, TOP-TO-BOTTOM ON MOBILE) */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b lg:bg-gradient-to-r from-slate-950/85 via-slate-950/45 to-transparent w-full lg:w-2/3 pointer-events-none" />
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-slate-950/90 via-transparent/30 to-slate-950/40 pointer-events-none" />
+      {/* DESKTOP GRADIENT OVERLAY */}
+      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-transparent w-2/3 pointer-events-none" />
+      <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
+
+      {/* 2. MOBILE & TABLET RESPONSIVE UNCROPPED HERO BACKGROUND (< 1024px) */}
+      <div className="absolute inset-0 z-0 block lg:hidden">
+        {heroSlides.map((slide, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 bg-[length:100%_auto] sm:bg-contain bg-top bg-no-repeat transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+            style={{ backgroundImage: `url('${slide}')` }}
+          />
+        ))}
+      </div>
+
+      {/* MOBILE GRADIENT OVERLAY (SMOOTH TRANSITION BELOW UNCROPPED MOBILE ARTWORK) */}
+      <div className="absolute inset-0 z-10 block lg:hidden bg-gradient-to-b from-slate-950/30 via-slate-950/80 to-slate-950 pointer-events-none" />
 
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-16 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-52 sm:pt-64 md:pt-80 lg:pt-24 pb-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
           {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
-          <div className="inline-flex items-center gap-2.5 sm:gap-3 bg-slate-900/90 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
+          <div className="inline-flex items-center gap-2.5 sm:gap-3 bg-slate-900/95 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
             <div className="w-8 h-5 sm:w-9 sm:h-6 rounded overflow-hidden border border-amber-300 shadow shrink-0">
-              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
+              <img
+                loading="eager"
+                decoding="async"
+                src="/media/tvk_official_logo.jpg"
                 alt="TVK Official Flag Logo"
                 className="w-full h-full object-cover"
               />
@@ -78,7 +97,7 @@ export default function FullBleedHero() {
           </div>
 
           {/* Concise Supporting Statement */}
-          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-950/60 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+          <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed font-medium max-w-xl drop-shadow-md bg-slate-950/80 lg:bg-slate-950/40 p-3.5 sm:p-4 rounded-2xl border border-white/10 backdrop-blur-md">
             {t('heroDesc')}
           </p>
 
