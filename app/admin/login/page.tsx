@@ -24,7 +24,14 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { error: text.includes('Internal Server Error') ? 'Server configuration error: Database connection could not be established. Please verify your DATABASE_URL in Hostinger settings.' : (text || `Server error (${res.status})`) };
+      }
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to authenticate. Please check your admin credentials.');
