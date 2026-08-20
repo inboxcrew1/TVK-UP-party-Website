@@ -17,18 +17,26 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<LanguageCode>('HI');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('tvk_lang') as LanguageCode;
-    if (saved && LanguageOptions.some((l) => l.code === saved)) {
-      setLang(saved);
-      document.documentElement.setAttribute('data-lang', saved);
+    setMounted(true);
+    try {
+      const saved = localStorage.getItem('tvk_lang') as LanguageCode;
+      if (saved && LanguageOptions.some((l) => l.code === saved)) {
+        setLang(saved);
+        document.documentElement.setAttribute('data-lang', saved);
+      }
+    } catch {
+      // localStorage not available (SSR or private mode)
     }
   }, []);
 
   const setLanguage = (code: LanguageCode) => {
     setLang(code);
-    localStorage.setItem('tvk_lang', code);
+    try {
+      localStorage.setItem('tvk_lang', code);
+    } catch { /* noop */ }
     document.documentElement.setAttribute('data-lang', code);
   };
 

@@ -190,62 +190,87 @@ export default function RealisticMemberCard({
     const cardElement = cardRef.current;
     if (!cardElement) return;
 
+    // Clone the card HTML and force-remove lazy loading so images appear in the popup
+    const cardHtml = cardElement.outerHTML
+      .replace(/loading="lazy"/g, 'loading="eager"')
+      .replace(/loading='lazy'/g, "loading='eager'");
+
     const printWindow = window.open('', '_blank', 'width=1050,height=680');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>TVK_UP_Member_Card_${membershipNumber.replace(/\s+/g, '_')}</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <style>
-              @page {
-                size: 3.375in 2.125in;
-                margin: 0;
-              }
-              html, body {
-                width: 3.375in;
-                height: 2.125in;
-                margin: 0;
-                padding: 0;
-                background: #090d16;
-                overflow: hidden;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              .print-card-box {
-                width: 1013px !important;
-                height: 638px !important;
-                transform-origin: top left;
-                transform: scale(0.242346); /* Scales 1013px to exactly 3.375in on screen */
-              }
-              @media print {
-                body {
-                  width: 3.375in !important;
-                  height: 2.125in !important;
-                }
-                .print-card-box {
-                  transform: scale(0.242346) !important;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <div className="print-card-box">
-              ${cardElement.outerHTML}
-            </div>
-            <script>
-              window.onload = () => {
-                setTimeout(() => {
-                  window.print();
-                }, 300);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+    if (!printWindow) {
+      // Fallback: open blocked by browser — tell user to allow popups
+      alert('Please allow popups for this site to download your ID card. Then click the download button again.');
+      return;
     }
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <title>TVK_UP_Member_Card_${membershipNumber.replace(/\s+/g, '_')}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <style>
+      @page { size: 3.375in 2.125in; margin: 0; }
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body {
+        width: 3.375in;
+        height: 2.125in;
+        margin: 0; padding: 0;
+        background: #090d16;
+        overflow: hidden;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+      }
+      .tvk-print-wrap {
+        position: absolute;
+        top: 0; left: 0;
+        width: 480px;
+        height: 302px;
+        transform-origin: top left;
+        transform: scale(0.675);
+      }
+      .tvk-print-wrap > div {
+        width: 480px !important;
+        height: 302px !important;
+        max-width: 480px !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+      }
+      @media print {
+        html, body { width: 3.375in !important; height: 2.125in !important; }
+        .tvk-print-wrap { transform: scale(0.675) !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tvk-print-wrap">
+      ${cardHtml}
+    </div>
+    <script>
+      // Wait for images to load before printing
+      var imgs = document.querySelectorAll('img');
+      var total = imgs.length;
+      var loaded = 0;
+      function tryPrint() {
+        loaded++;
+        if (loaded >= total) {
+          setTimeout(function() { window.print(); }, 150);
+        }
+      }
+      if (total === 0) {
+        setTimeout(function() { window.print(); }, 200);
+      } else {
+        imgs.forEach(function(img) {
+          if (img.complete) { tryPrint(); }
+          else {
+            img.onload = tryPrint;
+            img.onerror = tryPrint;
+          }
+        });
+      }
+    <\/script>
+  </body>
+</html>`);
+    printWindow.document.close();
   };
 
   return (

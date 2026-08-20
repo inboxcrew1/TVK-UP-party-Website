@@ -758,20 +758,19 @@ export default function SadasyataPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#040105] text-white font-sans relative overflow-x-hidden select-none">
+    <div className="min-h-screen bg-[#040105] text-white font-sans relative overflow-x-hidden">
       {/* UNIFIED GLOBAL HEADER */}
       <Header />
 
       {/* 1. LAYERED DEPTH BACKGROUND: CINEMATIC RADIAL VIGNETTE & RED-GOLD ATMOSPHERIC GLOW */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#59000a]/35 via-[#080207] to-[#020003] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#59000a]/35 via-[#080207] to-[#020003] pointer-events-none z-0" />
 
-      {/* 2. ATMOSPHERIC RED-GOLD LASER LIGHT BEAMS */}
-      <div className="fixed top-0 left-0 w-[500px] h-[900px] bg-gradient-to-br from-[#E11D48]/30 via-[#800000]/15 to-transparent blur-3xl pointer-events-none z-0" />
-      <div className="fixed top-0 right-0 w-[600px] h-[900px] bg-gradient-to-bl from-[#E11D48]/30 via-[#A00000]/15 to-transparent blur-3xl pointer-events-none z-0" />
-      <div className="fixed bottom-0 left-1/3 w-[700px] h-[700px] bg-gradient-to-t from-red-950/20 via-amber-500/5 to-transparent blur-[200px] pointer-events-none z-0" />
+      {/* 2. ATMOSPHERIC RED-GOLD LASER LIGHT BEAMS — scoped to top of page */}
+      <div className="absolute top-0 left-0 w-[500px] h-[600px] bg-gradient-to-br from-[#E11D48]/20 via-[#800000]/10 to-transparent blur-3xl pointer-events-none z-0 overflow-hidden" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#E11D48]/20 via-[#A00000]/10 to-transparent blur-3xl pointer-events-none z-0 overflow-hidden" />
 
       {/* 3. SUBTLE PARTY-THEMED WATERMARK EMBLEM LAYER */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
+      <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.03] flex items-center justify-center">
         <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Watermark" className="w-[800px] h-auto object-contain filter grayscale invert" />
       </div>
 
