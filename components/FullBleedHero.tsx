@@ -27,7 +27,7 @@ export default function FullBleedHero() {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-24 sm:pt-28 lg:pt-0 pb-12 lg:pb-0">
+    <section className="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[92vh] flex items-center justify-center bg-slate-950 text-white overflow-hidden pt-20 pb-12 lg:py-0">
       {/* 1. DESKTOP FULL-BLEED SLIDING BACKGROUND (100% UNTOUCHED AT LG+ BREAKPOINT) */}
       <div className="absolute inset-0 z-0 hidden lg:block">
         {heroSlides.map((slide, idx) => (
@@ -46,24 +46,11 @@ export default function FullBleedHero() {
       <div className="absolute inset-0 z-10 hidden lg:block bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30 pointer-events-none" />
 
       {/* HERO OVERLAY CONTENT */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-12 lg:py-24 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
         <div className="lg:col-span-8 xl:col-span-7 space-y-4 sm:space-y-6 text-left">
-          {/* OFFICIAL TVK FLAG LOGO TAGLINE BADGE */}
-          <div className="inline-flex items-center gap-2.5 sm:gap-3 bg-slate-900/95 text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-[11px] sm:text-xs font-black uppercase tracking-wider border-2 border-amber-400/80 shadow-2xl backdrop-blur-md">
-            <div className="w-8 h-5 sm:w-9 sm:h-6 rounded overflow-hidden border border-amber-300 shadow shrink-0">
-              <img
-                loading="eager"
-                decoding="async"
-                src="/media/tvk_official_logo.jpg"
-                alt="TVK Official Flag Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <span>आधिकारिक डिजिटल संगठन &bull; TVK {t('titleSub')}</span>
-          </div>
-
-          {/* DEDICATED MOBILE HERO PICTURE BANNER — 100% UNCROPPED FULL VISIBILITY ON PHONES */}
-          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.35)] relative bg-slate-950 mt-3 sm:mt-4 mb-3 group">
+          
+          {/* DEDICATED UNCROPPED MOBILE HERO PICTURE BANNER (NO BORDER, NO BADGE OVERLAY) */}
+          <div className="block lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-1 group">
             {heroSlides.map((slide, idx) => (
               <img
                 key={idx}
@@ -76,16 +63,10 @@ export default function FullBleedHero() {
                 }`}
               />
             ))}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute bottom-2 left-3.5 right-3.5 flex items-center justify-between pointer-events-none">
-              <span className="text-[10px] font-black text-amber-300 uppercase tracking-widest bg-slate-950/85 px-2.5 py-0.5 rounded-lg border border-amber-400/40 backdrop-blur-sm shadow-md">
-                TVK UTTAR PRADESH OFFICIAL BANNER
-              </span>
-            </div>
           </div>
 
           {/* Main Heading with tracking-[0.14em] TVK Letter Spacing */}
-          <div className="space-y-1">
+          <div className="space-y-1 pt-1">
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-[0.14em] text-white font-display leading-none drop-shadow-2xl">
               TVK
             </h1>
