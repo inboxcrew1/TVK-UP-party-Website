@@ -359,21 +359,31 @@ According to the Election Commission of India's published results, TVK won 108 o
       <main className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-10">
         
         {/* HERO BANNER WITH 70% VISIBILITY OFFICIAL TVK FLAG ARTWORK BACKGROUND */}
-        <div className="relative bg-[#0c0307]/80 backdrop-blur-2xl border border-red-500/40 rounded-3xl p-8 md:p-12 shadow-[0_0_60px_rgba(225,29,72,0.3)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="relative bg-[#0c0307]/80 backdrop-blur-2xl border border-red-500/40 rounded-3xl p-4 sm:p-8 md:p-12 shadow-[0_0_60px_rgba(225,29,72,0.3)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
           
-          {/* 70% VISIBILITY OFFICIAL TVK FLAG ARTWORK BACKGROUND LAYER */}
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          {/* DESKTOP BACKGROUND LAYER (ONLY VISIBLE ON DESKTOP ≥1024px) */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none hidden lg:block">
             <img loading="eager" decoding="async" src="/media/about_flag_hero.jpg"
               alt="Official TVK Flag Artwork"
               className="w-full h-full object-cover object-center opacity-70 filter contrast-110 brightness-95"
             />
-            {/* Ultra-Premium Dark Vignette & Soft Gradient Mask for Crystal-Clear Text Readability */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#0c0307]/90 via-[#0c0307]/60 to-[#0c0307]/30" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#0c0307]/40 to-[#0c0307]" />
           </div>
 
           {/* Left Editorial Text Block */}
-          <div className="lg:col-span-8 space-y-5 text-left relative z-10">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-5 text-left relative z-10">
+            
+            {/* UNCROPPED MOBILE ABOUT HERO PICTURE CARD (< 1024px) */}
+            <div className="lg:hidden w-full aspect-[16/9] rounded-2xl overflow-hidden relative bg-slate-950 my-2 shadow-2xl border border-red-500/40">
+              <img
+                loading="eager"
+                decoding="async"
+                src="/media/about_flag_hero.jpg"
+                alt="Official TVK Flag Artwork"
+                className="w-full h-full object-cover sm:object-contain"
+              />
+            </div>
             <div className="inline-flex items-center gap-2 bg-red-950/70 border border-amber-400/60 text-amber-400 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg backdrop-blur-md">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>{pageData.badge}</span>
