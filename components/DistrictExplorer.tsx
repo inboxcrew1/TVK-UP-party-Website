@@ -64,23 +64,28 @@ export default function DistrictExplorer() {
   }, [districtList]);
 
   return (
-    <section className="py-16 bg-[#F8F9FA] border-t border-slate-200 relative z-20 select-none shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 space-y-8">
+    <section className="py-16 bg-[#F4F4F6] text-slate-900 border-t border-b border-slate-300 relative z-30 isolate select-none shadow-md overflow-hidden">
+      
+      {/* SOLID OPAQUE BACKDROP TO BLOCK ALL FIXED BACKGROUND GLOWS */}
+      <div className="absolute inset-0 bg-[#F4F4F6] z-0 pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 space-y-8 relative z-10">
         <div className="text-center space-y-2 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-slate-200/80 border border-slate-300 text-slate-800 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+          {/* NEUTRAL OFF-WHITE BADGE (ZERO PINK/RED) */}
+          <div className="inline-flex items-center gap-2 bg-slate-200/90 border border-slate-300 text-slate-800 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
             <MapPin className="w-4 h-4 text-[#A00000]" /> {t('districtBadge')}
           </div>
           <h3 className="text-3xl md:text-4xl font-black text-slate-900 font-display">
             {t('districtTitle')}
           </h3>
-          <p className="text-slate-600 text-xs md:text-sm">
+          <p className="text-slate-600 text-xs md:text-sm font-medium">
             {t('districtDesc')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: District List Selector */}
-          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 max-h-[480px] overflow-y-auto">
+          <div className="lg:col-span-5 bg-white border border-slate-300 rounded-3xl p-5 shadow-sm space-y-3 max-h-[480px] overflow-y-auto">
             <h4 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider px-2">
               {t('selectDistrict')}
             </h4>
@@ -107,8 +112,8 @@ export default function DistrictExplorer() {
             </div>
           </div>
 
-          {/* Right: Detailed District Panel */}
-          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+          {/* Right: Detailed District Panel (NEUTRAL SLATE BORDER, ZERO PINK) */}
+          <div className="lg:col-span-7 bg-white border border-slate-300 rounded-3xl p-8 shadow-xl space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <span className="text-[10px] text-[#A00000] font-bold uppercase tracking-wider block">
