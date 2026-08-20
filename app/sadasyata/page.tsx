@@ -466,6 +466,16 @@ export default function SadasyataPage() {
   // Cards Results State (Allows multiple cards for 1 phone number up to 10)
   const [foundCardsList, setFoundCardsList] = useState<any[]>([]);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const cardSectionRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to card section on desktop when card is generated
+  useEffect(() => {
+    if (selectedCard && cardSectionRef.current) {
+      setTimeout(() => {
+        cardSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }, [selectedCard]);
 
   // Update Assemblies List whenever District changes
   useEffect(() => {
@@ -1002,7 +1012,7 @@ export default function SadasyataPage() {
 
               {/* SELECTED SINGLE CARD DISPLAY WITH PDF/PNG DOWNLOAD */}
               {selectedCard && (
-                <div className="bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-emerald-500 space-y-6 animate-fade-in">
+                <div ref={cardSectionRef} className="bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-emerald-500 space-y-6 animate-fade-in">
                   {/* Banner */}
                   <div className="bg-gradient-to-r from-emerald-600 via-teal-700 to-slate-900 border-2 border-emerald-400 p-4 rounded-2xl text-white flex items-center justify-between shadow-xl">
                     <div className="space-y-1">
@@ -1286,6 +1296,33 @@ export default function SadasyataPage() {
                           ))}
                         </select>
                       </div>
+                    </div>
+
+                    {/* MANDATORY CONSENT CHECKBOX */}
+                    <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer select-text">
+                        <div className="shrink-0 mt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={formData.consentChecked}
+                            onChange={(e) => {
+                              setFormData((prev) => ({ ...prev, consentChecked: e.target.checked }));
+                              if (e.target.checked) setConsentErrorMsg('');
+                            }}
+                            className="w-5 h-5 rounded border-2 border-amber-500 accent-amber-500 cursor-pointer mt-0.5"
+                          />
+                        </div>
+                        <span className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                          <span className="text-red-600 font-black">* </span>
+                          {ms.membershipConsent}
+                        </span>
+                      </label>
+                      {consentErrorMsg && (
+                        <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 flex items-start gap-2">
+                          <span className="shrink-0 mt-0.5">⚠</span>
+                          <span>{consentErrorMsg}</span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Submit Button */}

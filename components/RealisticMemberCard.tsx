@@ -189,8 +189,8 @@ export default function RealisticMemberCard({
 
   // ============================================================
   // HTML2CANVAS-BASED IMAGE DOWNLOAD (PNG / JPG)
-  // Captures the exact card DOM element at 3× pixel density
-  // → ~1440×907px for a crisp, print-quality image
+  // Captures card at 3× pixel density → ~1440×906px print-quality
+  // Handles base64 passport photos, CORS images, and gradients
   // ============================================================
   const downloadAsImage = async (format: 'png' | 'jpg') => {
     const cardElement = cardRef.current;
@@ -198,89 +198,100 @@ export default function RealisticMemberCard({
 
     format === 'png' ? setIsDownloadingPng(true) : setIsDownloadingJpg(true);
 
+    // Track object URLs created from base64 so we can revoke them after capture
+    const objectUrlsToRevoke: string[] = [];
+
     try {
-      // Dynamically import html2canvas (client-only)
+      // Dynamically import html2canvas (client-only, lazy loaded)
       const html2canvas = (await import('html2canvas')).default;
 
-      // Pre-load all images in the card to make sure they are fully decoded
+      // Step 1: Pre-load every <img> in the card and convert base64 → object URL.
+      // html2canvas can capture CORS images with useCORS:true, but base64 data: URIs
+      // can cause security errors on some browsers when drawn to canvas.
+      // Converting them to Blob object URLs makes them same-origin safe.
       const images = Array.from(cardElement.querySelectorAll('img'));
+
       await Promise.all(
-        images.map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete && img.naturalWidth > 0) {
-                resolve();
-              } else {
-                img.onload = () => resolve();
-                img.onerror = () => resolve(); // continue even if one fails
-                // Force reload if not loaded
-                if (!img.src) resolve();
-              }
-            })
-        )
+        images.map(async (img) => {
+          // If this is a base64 data: URI, convert it to a Blob URL
+          if (img.src && img.src.startsWith('data:')) {
+            try {
+              const res = await fetch(img.src);
+              const blob = await res.blob();
+              const objectUrl = URL.createObjectURL(blob);
+              objectUrlsToRevoke.push(objectUrl);
+              img.src = objectUrl; // Replace data: with blob: URL
+            } catch {
+              // If conversion fails, leave as-is
+            }
+          }
+
+          // Ensure image is fully loaded before capture
+          if (!img.complete || img.naturalWidth === 0) {
+            await new Promise<void>((resolve) => {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            });
+          }
+        })
       );
 
-      // Capture the card at 3× DPI for crisp print quality
-      // The card on screen is ~480px wide × ~302px tall
-      // At scale=3 → 1440px × 906px (excellent for printing at 300 DPI)
+      // Step 2: Capture the card element at 3× density
+      const cardRect = cardElement.getBoundingClientRect();
       const canvas = await html2canvas(cardElement, {
         scale: 3,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,   // false + Blob URLs = safe canvas, no tainting
         logging: false,
-        backgroundColor: null, // preserve card's own gradient background
-        imageTimeout: 8000,
-        onclone: (clonedDoc) => {
-          // In the clone, force all images to eager
-          const clonedImgs = clonedDoc.querySelectorAll('img');
-          clonedImgs.forEach((img) => {
-            img.setAttribute('loading', 'eager');
-            img.setAttribute('decoding', 'sync');
-          });
+        backgroundColor: null,
+        imageTimeout: 10000,
+        width: cardRect.width,
+        height: cardRect.height,
+        windowWidth: cardRect.width,
+        windowHeight: cardRect.height,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (_clonedDoc: Document, clonedElement: HTMLElement) => {
+          // Remove border-radius clipping from the cloned element so
+          // html2canvas captures the full card without corner clipping artefacts
+          clonedElement.style.borderRadius = '0';
+          clonedElement.style.overflow = 'visible';
         },
       });
 
-      // Build the safe filename
+      // Step 3: Trigger download
       const safeMemberId = membershipNumber.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
       const filename = `TVK-UP-Membership-ID-${safeMemberId}.${format}`;
+      const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+      const quality = format === 'jpg' ? 0.95 : undefined;
 
-      if (format === 'png') {
-        // PNG — lossless, sharpest text & borders
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          },
-          'image/png'
-        );
-      } else {
-        // JPG — high quality (0.95), smaller file
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          },
-          'image/jpeg',
-          0.95
-        );
-      }
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            alert('Could not generate image. Please try Print instead.');
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          // Revoke all temporary object URLs
+          URL.revokeObjectURL(url);
+          objectUrlsToRevoke.forEach((u) => URL.revokeObjectURL(u));
+        },
+        mimeType,
+        quality
+      );
     } catch (err) {
       console.error('Image download failed:', err);
-      alert('Image download failed. Please try the Print option instead.');
+      // Revoke any created object URLs on error
+      objectUrlsToRevoke.forEach((u) => URL.revokeObjectURL(u));
+      alert('Image download failed. Please try the Print ID button instead.');
     } finally {
       format === 'png' ? setIsDownloadingPng(false) : setIsDownloadingJpg(false);
     }
