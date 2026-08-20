@@ -64,10 +64,10 @@ export default function DistrictExplorer() {
   }, [districtList]);
 
   return (
-    <section className="py-16 bg-slate-50 border-t border-slate-200 select-none">
+    <section className="py-16 bg-[#F8F9FA] border-t border-slate-200 relative z-20 select-none shadow-sm">
       <div className="max-w-7xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-2 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-[#A00000] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 bg-slate-200/80 border border-slate-300 text-slate-800 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
             <MapPin className="w-4 h-4 text-[#A00000]" /> {t('districtBadge')}
           </div>
           <h3 className="text-3xl md:text-4xl font-black text-slate-900 font-display">
@@ -108,7 +108,7 @@ export default function DistrictExplorer() {
           </div>
 
           {/* Right: Detailed District Panel */}
-          <div className="lg:col-span-7 bg-white border-2 border-[#A00000]/20 rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <span className="text-[10px] text-[#A00000] font-bold uppercase tracking-wider block">
