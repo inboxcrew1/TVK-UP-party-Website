@@ -148,6 +148,13 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error('Admin members fetch error:', error);
-    return NextResponse.json({ error: 'Failed to retrieve members list.' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to retrieve members list.',
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
