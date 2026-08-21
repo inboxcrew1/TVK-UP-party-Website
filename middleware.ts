@@ -1,8 +1,13 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  try {
+    return await updateSession(request);
+  } catch (err) {
+    console.warn("Root middleware skipped on error:", err);
+    return NextResponse.next();
+  }
 }
 
 export const config = {
@@ -13,7 +18,7 @@ export const config = {
      * - _next/image  (image optimization)
      * - favicon.ico, sitemap.xml, robots.txt
      * - /media/* (public media assets)
-     * - /api/member/* (public registration APIs — no auth required)
+     * - /api/member/* (public registration APIs)
      * - /api/geo/*   (public geography APIs)
      * - /api/cms/*   (public CMS APIs)
      */

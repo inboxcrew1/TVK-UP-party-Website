@@ -1,11 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const defaultUrl = "https://placeholder.supabase.co";
+const defaultKey = "placeholder-key";
 
 export const createClient = async () => {
   const cookieStore = await cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || defaultUrl;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || defaultKey;
 
   return createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -19,7 +21,6 @@ export const createClient = async () => {
           );
         } catch {
           // Called from a Server Component — safe to ignore.
-          // Middleware handles session refresh.
         }
       },
     },
