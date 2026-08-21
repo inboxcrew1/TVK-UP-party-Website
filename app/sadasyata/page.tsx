@@ -466,6 +466,7 @@ export default function SadasyataPage() {
   // Cards Results State (Allows multiple cards for 1 phone number up to 10)
   const [foundCardsList, setFoundCardsList] = useState<any[]>([]);
   const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [liveStatsCount, setLiveStatsCount] = useState<number>(0);
   const cardSectionRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to card section on desktop when card is generated
@@ -476,6 +477,27 @@ export default function SadasyataPage() {
       }, 150);
     }
   }, [selectedCard]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/member/counter');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          setLiveStatsCount(data.activeMembers ?? data.count ?? 0);
+        }
+      } catch (err) {
+        console.error('Error loading live stats in sadasyata:', err);
+      }
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Update Assemblies List whenever District changes
   useEffect(() => {
@@ -862,7 +884,9 @@ export default function SadasyataPage() {
                 <span className="text-xs font-black text-amber-400 uppercase tracking-widest block">{ms.statsHeader}</span>
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                    <span className="text-2xl font-black font-mono text-amber-400">0+</span>
+                    <span className="text-2xl font-black font-mono text-amber-400">
+                      {liveStatsCount.toLocaleString('en-IN')}
+                    </span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase">{ms.statsMembers}</span>
                   </div>
                   <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800">

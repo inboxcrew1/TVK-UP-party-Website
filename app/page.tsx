@@ -32,7 +32,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const formattedMemberCount = liveCount === null ? 'Loading...' : liveCount.toLocaleString('en-IN');
+  const formattedMemberCount = liveCount === null ? '0' : liveCount.toLocaleString('en-IN');
 
   const statistics = [
     { label: t('activeMembers'), value: formattedMemberCount, icon: CheckCircle2, color: 'text-emerald-400' },

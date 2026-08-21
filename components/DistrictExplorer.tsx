@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { MapPin, Users, Building2, Landmark, CheckCircle2, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { UP_DISTRICT_ASSEMBLIES } from '../lib/upConstituencies';
 
 interface DistrictItem {
   id: string;
@@ -12,34 +13,31 @@ interface DistrictItem {
   assemblies: number;
 }
 
-const BASE_SAMPLE_DISTRICTS: DistrictItem[] = [
-  { id: '1', name: 'Bulandshahr', count: 0, assemblies: 7 },
-  { id: '2', name: 'Lucknow', count: 0, assemblies: 9 },
-  { id: '3', name: 'Varanasi', count: 0, assemblies: 8 },
-  { id: '4', name: 'Kanpur Nagar', count: 0, assemblies: 10 },
-  { id: '5', name: 'Prayagraj', count: 0, assemblies: 12 },
-  { id: '6', name: 'Gautam Buddha Nagar (Noida)', count: 0, assemblies: 3 },
-  { id: '7', name: 'Ghaziabad', count: 0, assemblies: 5 },
-  { id: '8', name: 'Gorakhpur', count: 0, assemblies: 9 },
-  { id: '9', name: 'Agra', count: 0, assemblies: 9 },
-  { id: '10', name: 'Meerut', count: 0, assemblies: 7 },
-];
+// Generate the complete initial list of all 75 UP Districts
+const ALL_75_UP_DISTRICTS: DistrictItem[] = Object.keys(UP_DISTRICT_ASSEMBLIES).map((dName, idx) => ({
+  id: String(idx + 1),
+  name: dName,
+  count: 0,
+  assemblies: UP_DISTRICT_ASSEMBLIES[dName]?.length || 5,
+}));
 
 export default function DistrictExplorer() {
   const { t } = useLanguage();
-  const [districtList, setDistrictList] = useState<DistrictItem[]>(BASE_SAMPLE_DISTRICTS);
-  const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem>(BASE_SAMPLE_DISTRICTS[0]);
+  const [districtList, setDistrictList] = useState<DistrictItem[]>(ALL_75_UP_DISTRICTS);
+  const [selectedDistrictName, setSelectedDistrictName] = useState<string>('Bulandshahr');
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchLiveDistrictCounts = async () => {
       try {
         const res = await fetch('/api/member/counter?allDistricts=true');
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const data = await res.json();
           const allMap: Record<string, number> = data.allDistricts || {};
 
-          setDistrictList((prevList) =>
-            prevList.map((item) => ({
+          setDistrictList(
+            ALL_75_UP_DISTRICTS.map((item) => ({
               ...item,
               count: allMap[item.name] || 0,
             }))
@@ -52,16 +50,16 @@ export default function DistrictExplorer() {
 
     fetchLiveDistrictCounts();
     const interval = setInterval(fetchLiveDistrictCounts, 5000);
-    return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  // Update selected district when districtList count changes
-  useEffect(() => {
-    const matched = districtList.find((d) => d.id === selectedDistrict.id);
-    if (matched) {
-      setSelectedDistrict(matched);
-    }
-  }, [districtList]);
+  const selectedDistrict = useMemo(() => {
+    return districtList.find((d) => d.name === selectedDistrictName) || districtList[0] || ALL_75_UP_DISTRICTS[0];
+  }, [districtList, selectedDistrictName]);
 
   return (
     <section className="py-16 bg-[#F4F4F6] text-slate-900 border-t border-b border-slate-300 relative z-30 w-full select-none shadow-md overflow-hidden">
@@ -71,7 +69,7 @@ export default function DistrictExplorer() {
 
       <div className="max-w-7xl mx-auto px-6 space-y-8 relative z-10">
         <div className="text-center space-y-2 max-w-3xl mx-auto">
-          {/* NEUTRAL OFF-WHITE BADGE (ZERO PINK/RED) */}
+          {/* NEUTRAL OFF-WHITE BADGE */}
           <div className="inline-flex items-center gap-2 bg-slate-200/90 border border-slate-300 text-slate-800 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
             <MapPin className="w-4 h-4 text-[#A00000]" /> {t('districtBadge')}
           </div>
@@ -84,27 +82,29 @@ export default function DistrictExplorer() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left: District List Selector */}
+          {/* Left: District List Selector (All 75 UP Districts with live counts) */}
           <div className="lg:col-span-5 bg-white border border-slate-300 rounded-3xl p-5 shadow-sm space-y-3 max-h-[480px] overflow-y-auto">
-            <h4 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider px-2">
-              {t('selectDistrict')}
-            </h4>
+            <div className="flex items-center justify-between px-2">
+              <h4 className="font-extrabold text-xs text-slate-400 uppercase tracking-wider">
+                {t('selectDistrict')} (75 Districts)
+              </h4>
+            </div>
             <div className="space-y-1.5">
               {districtList.map((d) => (
                 <button
                   key={d.id}
-                  onClick={() => setSelectedDistrict(d)}
+                  onClick={() => setSelectedDistrictName(d.name)}
                   className={`w-full text-left p-3 rounded-2xl flex items-center justify-between transition-all border ${
-                    selectedDistrict.id === d.id
+                    selectedDistrict.name === d.name
                       ? 'bg-[#A00000] text-white border-[#A00000] shadow-md font-bold'
                       : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <MapPin className={`w-4 h-4 ${selectedDistrict.id === d.id ? 'text-amber-300' : 'text-[#A00000]'}`} />
+                    <MapPin className={`w-4 h-4 ${selectedDistrict.name === d.name ? 'text-amber-300' : 'text-[#A00000]'}`} />
                     <span className="text-xs font-extrabold">{d.name}</span>
                   </div>
-                  <span className={`text-xs font-mono font-black ${selectedDistrict.id === d.id ? 'text-amber-300' : 'text-slate-600'}`}>
+                  <span className={`text-xs font-mono font-black ${selectedDistrict.name === d.name ? 'text-amber-300' : 'text-slate-600'}`}>
                     {d.count.toLocaleString('en-IN')} {t('activeMembers')}
                   </span>
                 </button>
@@ -112,7 +112,7 @@ export default function DistrictExplorer() {
             </div>
           </div>
 
-          {/* Right: Detailed District Panel (NEUTRAL SLATE BORDER, ZERO PINK) */}
+          {/* Right: Detailed District Panel */}
           <div className="lg:col-span-7 bg-white border border-slate-300 rounded-3xl p-8 shadow-xl space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4">
               <div>

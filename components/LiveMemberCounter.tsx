@@ -4,33 +4,59 @@ import { useState, useEffect } from 'react';
 import { Sparkles, Users } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function LiveMemberCounter({ baseCount = 0 }: { baseCount?: number }) {
-  const [totalCount, setTotalCount] = useState<number | null>(null);
+interface LiveMemberCounterProps {
+  baseCount?: number;
+  district?: string;
+  assembly?: string;
+  customTitle?: string;
+}
+
+export default function LiveMemberCounter({
+  baseCount = 0,
+  district,
+  assembly,
+  customTitle,
+}: LiveMemberCounterProps) {
+  const [totalCount, setTotalCount] = useState<number>(baseCount);
   const { t } = useLanguage();
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchRealDatabaseCount = async () => {
       try {
-        const res = await fetch('/api/member/counter');
-        if (res.ok) {
+        const queryParams = new URLSearchParams();
+        if (district) queryParams.set('district', district);
+        if (assembly) queryParams.set('assembly', assembly);
+
+        const url = `/api/member/counter${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const res = await fetch(url);
+        if (res.ok && isMounted) {
           const data = await res.json();
-          setTotalCount(data.count ?? 0);
-        } else {
-          setTotalCount(0);
+          const count = district ? (assembly ? data.assemblyCount : data.districtCount) : data.activeMembers ?? data.count;
+          setTotalCount(count ?? 0);
         }
       } catch (err) {
         console.error('Failed to load database member count:', err);
-        setTotalCount(0);
       }
     };
 
     fetchRealDatabaseCount();
     const interval = setInterval(fetchRealDatabaseCount, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [district, assembly]);
 
-  const formattedCount = totalCount === null ? 'Loading...' : totalCount.toLocaleString('en-IN');
+  const displayTitle = customTitle
+    ? customTitle
+    : district
+    ? `TVK ${district} District Active Members`
+    : t('totalMembersUP');
+
+  const formattedCount = totalCount.toLocaleString('en-IN');
 
   return (
     <div className="bg-slate-900 text-white rounded-3xl p-6 md:p-8 shadow-2xl border-2 border-amber-400/60 relative overflow-hidden my-8 select-none">
@@ -45,12 +71,16 @@ export default function LiveMemberCounter({ baseCount = 0 }: { baseCount?: numbe
           </div>
 
           <h3 className="text-2xl sm:text-3xl font-black font-display text-white">
-            {t('totalMembersUP')}
+            {displayTitle}
           </h3>
 
           <p className="text-slate-400 text-xs flex items-center gap-1.5 justify-center md:justify-start">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>आधिकारिक प्राथमिक सदस्य संख्या (Database Verified Active Members)</span>
+            <span>
+              {district
+                ? `आधिकारिक ${district} सक्रिय सदस्य संख्या (Database Verified)`
+                : 'आधिकारिक प्राथमिक सदस्य संख्या (Database Verified Active Members)'}
+            </span>
           </p>
         </div>
 
@@ -58,7 +88,7 @@ export default function LiveMemberCounter({ baseCount = 0 }: { baseCount?: numbe
         <div className="flex flex-col items-center md:items-end">
           <div className="text-xs font-black text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1">
             <Users className="w-3.5 h-3.5 text-amber-400" />
-            <span>LIVE REGISTERED MEMBERS</span>
+            <span>{district ? `${district.toUpperCase()} MEMBERS` : 'LIVE REGISTERED MEMBERS'}</span>
           </div>
 
           <div className="text-4xl sm:text-6xl font-black font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-white">

@@ -252,7 +252,7 @@ export default function DistrictsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono font-black text-red-400 uppercase tracking-widest block bg-red-950/80 px-2.5 py-1 rounded-md border border-red-500/30">
-                        DISTRICT ${String(i + 1).padStart(2, '0')}
+                        {`DISTRICT #${String(i + 1).padStart(2, '0')}`}
                       </span>
                       {isCurrentSelected && (
                         <span className="text-xs font-black bg-[#FFC72C] text-slate-950 px-2.5 py-1 rounded-full uppercase tracking-wider shadow-md">
