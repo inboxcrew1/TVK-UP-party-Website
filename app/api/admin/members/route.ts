@@ -14,28 +14,29 @@ export async function GET(req: Request) {
     }
 
     // Build filter based on admin scopes
-    const whereClause: Prisma.MemberWhereInput = {};
+    const baseScope: Prisma.MemberWhereInput = {};
 
     if (admin.role === 'STATE_ADMIN') {
       const stateIds = admin.scopes.map((s) => s.stateId).filter((id): id is string => !!id);
-      whereClause.stateId = { in: stateIds };
+      baseScope.stateId = { in: stateIds };
     } else if (admin.role === 'DISTRICT_ADMIN') {
       const districtIds = admin.scopes.map((s) => s.districtId).filter((id): id is string => !!id);
-      whereClause.districtId = { in: districtIds };
+      baseScope.districtId = { in: districtIds };
     } else if (admin.role === 'ASSEMBLY_ADMIN') {
       const assemblyIds = admin.scopes.map((s) => s.assemblyId).filter((id): id is string => !!id);
-      whereClause.assemblyId = { in: assemblyIds };
+      baseScope.assemblyId = { in: assemblyIds };
     } else if (admin.role !== 'SUPER_ADMIN' && admin.role !== 'NATIONAL_ADMIN') {
-      // Scopes that are not explicitly matched fall back to a block
       return NextResponse.json({ error: 'Forbidden: Scoped role configuration missing.' }, { status: 403 });
     }
 
-    // Extract search query params
+    // Extract search and filter query params
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
 
-    if (status) {
+    const whereClause: Prisma.MemberWhereInput = { ...baseScope };
+
+    if (status && status !== 'ALL') {
       whereClause.status = status;
     }
 
@@ -49,6 +50,7 @@ export async function GET(req: Request) {
       ];
     }
 
+    // 1. Fetch Member rows
     const members = await prisma.member.findMany({
       where: whereClause,
       include: {
@@ -58,6 +60,20 @@ export async function GET(req: Request) {
       },
       orderBy: { joiningDate: 'desc' },
     });
+
+    // 2. Fetch authoritative database statistics
+    const [totalCount, activeCount, pendingCount, rejectedCount, suspendedCount] = await Promise.all([
+      prisma.member.count({ where: baseScope }),
+      prisma.member.count({ where: { ...baseScope, status: 'ACTIVE' } }),
+      prisma.member.count({
+        where: {
+          ...baseScope,
+          status: { in: ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_OTP'] },
+        },
+      }),
+      prisma.member.count({ where: { ...baseScope, status: 'REJECTED' } }),
+      prisma.member.count({ where: { ...baseScope, status: 'SUSPENDED' } }),
+    ]);
 
     // Mask sensitive documents before sending to frontend client
     const sanitizedMembers = members.map((m) => {
@@ -97,6 +113,13 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       members: sanitizedMembers,
+      stats: {
+        total: totalCount,
+        active: activeCount,
+        pending: pendingCount,
+        rejected: rejectedCount,
+        suspended: suspendedCount,
+      },
     });
   } catch (error) {
     console.error('Admin members fetch error:', error);

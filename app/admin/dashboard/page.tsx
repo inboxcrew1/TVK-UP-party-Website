@@ -207,6 +207,15 @@ export default function AdminDashboardPage() {
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
   // Synchronize members from DB + LocalStorage (Dual Sync to catch 100% of registrations)
+  const [dbStats, setDbStats] = useState<{
+    total: number;
+    active: number;
+    pending: number;
+    rejected: number;
+    suspended: number;
+  }>({ total: 0, active: 0, pending: 0, rejected: 0, suspended: 0 });
+
+  // Load authoritative members directly from production database
   useEffect(() => {
     let active = true;
     async function loadMembers() {
@@ -229,88 +238,28 @@ export default function AdminDashboardPage() {
           return;
         }
 
-        let dbMembers: Member[] = [];
         if (res.ok) {
           const data = await res.json();
-          dbMembers = data.members || [];
-        }
-
-        // Also merge local browser registered members from localStorage
-        let localMembers: Member[] = [];
-        try {
-          const localList: any[] = JSON.parse(localStorage.getItem('tvk_members_db') || '[]');
-          localMembers = localList.map((lm: any, idx: number) => ({
-            id: lm.id || `local_${lm.membershipNumber || idx}`,
-            fullName: lm.fullName || lm.name || 'Registered Member',
-            dob: lm.dob || '1998-01-01',
-            gender: lm.gender || 'Male',
-            mobile: lm.phone || lm.mobile || 'N/A',
-            email: lm.email || null,
-            photoUrl: lm.photoPreview || lm.photoUrl || '/media/leadership.jpg',
-            membershipId: lm.membershipNumber || `TVK-UP ${100 + idx}`,
-            status: lm.status || 'ACTIVE',
-            joiningDate: lm.joinedAt || new Date().toISOString(),
-            approvedAt: new Date().toISOString(),
-            district: { name: lm.districtName || 'Bulandshahr' },
-            assembly: { name: lm.assemblyName || 'Central Assembly' },
-            documents: [
-              {
-                documentType: lm.govtIdType || 'Aadhaar Card',
-                documentNo: lm.govtIdNumber || 'XXXX-XXXX-1234',
-                fileUrl: lm.govtDocPreview || '',
-              },
-            ],
-            addressLine: lm.addressLine || '',
-          }));
-        } catch (e) {
-          console.error('Error reading localStorage members:', e);
-        }
-
-        // Combine DB and local members, removing duplicates by Membership ID or Phone
-        const combinedMap = new Map<string, Member>();
-        dbMembers.forEach((m) => {
-          const key = m.membershipId || m.mobile || m.id;
-          combinedMap.set(key, m);
-        });
-        localMembers.forEach((m) => {
-          const key = m.membershipId || m.mobile || m.id;
-          if (!combinedMap.has(key)) {
-            combinedMap.set(key, m);
+          setMembers(data.members || []);
+          if (data.stats) {
+            setDbStats(data.stats);
           }
-        });
-
-        let combinedList = Array.from(combinedMap.values());
-
-        // Apply filters locally if needed
-        if (statusFilter !== 'ALL') {
-          combinedList = combinedList.filter((m) => m.status === statusFilter);
         }
-        if (searchQuery.trim().length > 0) {
-          const q = searchQuery.toLowerCase().trim();
-          combinedList = combinedList.filter(
-            (m) =>
-              m.fullName.toLowerCase().includes(q) ||
-              m.mobile.toLowerCase().includes(q) ||
-              (m.email && m.email.toLowerCase().includes(q)) ||
-              (m.membershipId && m.membershipId.toLowerCase().includes(q)) ||
-              m.district.name.toLowerCase().includes(q) ||
-              m.assembly.name.toLowerCase().includes(q)
-          );
-        }
-
-        setMembers(combinedList);
       } catch (err) {
-        console.error('Error loading members:', err);
+        console.error('Error loading admin members from database:', err);
       } finally {
         if (active) setLoading(false);
       }
     }
 
     loadMembers();
+    const interval = setInterval(loadMembers, 5000);
+
     return () => {
       active = false;
+      clearInterval(interval);
     };
-  }, [statusFilter, searchQuery, router, reloadTrigger]);
+  }, [statusFilter, searchQuery, reloadTrigger, router]);
 
   // Load Office Bearers when tab active
   useEffect(() => {
@@ -748,11 +697,11 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Quick statistics aggregators
-  const totalCount = members.length;
-  const activeCount = members.filter((m) => m.status === 'ACTIVE').length;
-  const pendingCount = members.filter((m) => m.status === 'SUBMITTED' || m.status === 'UNDER_REVIEW').length;
-  const suspendedCount = members.filter((m) => m.status === 'SUSPENDED').length;
+  // Authoritative database metrics from production PostgreSQL
+  const totalCount = dbStats.total;
+  const activeCount = dbStats.active;
+  const pendingCount = dbStats.pending;
+  const suspendedCount = dbStats.suspended;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FAF7F2] via-[#F4EDE2] to-[#FCE8E8] text-slate-900 font-sans flex flex-col relative overflow-x-hidden">
