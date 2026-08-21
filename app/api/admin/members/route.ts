@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { getAdminFromRequest } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
-import { decrypt, maskDocumentNumber } from '../../../../lib/security';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +55,6 @@ export async function GET(req: Request) {
       include: {
         district: true,
         assembly: true,
-        documents: true,
       },
       orderBy: { joiningDate: 'desc' },
     });
@@ -100,23 +98,8 @@ export async function GET(req: Request) {
       suspendedCount = members.filter((m) => m.status === 'SUSPENDED').length;
     }
 
-    // Mask sensitive documents before sending to frontend client
+    // Sanitize members before sending to frontend client
     const sanitizedMembers = members.map((m) => {
-      const sanitizedDocs = (m.documents || []).map((doc) => {
-        let decNo = 'DECRYPTION_ERROR';
-        try {
-          decNo = decrypt(doc.documentNo);
-        } catch (err) {
-          console.error('Failed to decrypt doc no:', err);
-        }
-        return {
-          id: doc.id,
-          documentType: doc.documentType,
-          documentNo: maskDocumentNumber(decNo),
-          fileUrl: doc.fileUrl,
-        };
-      });
-
       return {
         id: m.id,
         fullName: m.fullName,
@@ -131,7 +114,7 @@ export async function GET(req: Request) {
         approvedAt: m.approvedAt,
         district: m.district,
         assembly: m.assembly,
-        documents: sanitizedDocs,
+        documents: [],
       };
     });
 
@@ -152,7 +135,6 @@ export async function GET(req: Request) {
       {
         error: 'Failed to retrieve members list.',
         details: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );
