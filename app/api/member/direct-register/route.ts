@@ -2,13 +2,36 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { getConstituenciesByDistrict } from '../../../../lib/upConstituencies';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, phone, email, dob, gender, age, govtIdType, govtIdNumber, photoPreview, stateName, districtName, assemblyName, referralCode, consentGiven, consentTimestamp, consentLanguage } = body;
+    const {
+      name,
+      phone,
+      email,
+      dob,
+      gender,
+      age,
+      govtIdType,
+      govtIdNumber,
+      photoPreview,
+      stateName,
+      districtName,
+      assemblyName,
+      consentGiven,
+      consentTimestamp,
+      consentLanguage,
+    } = body;
 
-    if (!name || !phone) {
-      return NextResponse.json({ error: 'Name and Mobile Number are required.' }, { status: 400 });
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: 'Full name is required.' }, { status: 400 });
+    }
+
+    const cleanPhone = (phone || '').trim().replace(/[^0-9]/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return NextResponse.json({ error: 'Valid 10-digit mobile number is required.' }, { status: 400 });
     }
 
     const dist = districtName || 'Bulandshahr';
@@ -16,8 +39,10 @@ export async function POST(req: Request) {
 
     // 1. SERVER-SIDE DISTRICT -> ASSEMBLY HIERARCHY VALIDATION
     const validAssemblies = getConstituenciesByDistrict(dist);
-    const isValidAssembly = validAssemblies.some((a) => a.toLowerCase().includes(ass.toLowerCase()) || ass.toLowerCase().includes(a.toLowerCase()));
-    
+    const isValidAssembly = validAssemblies.some(
+      (a) => a.toLowerCase().includes(ass.toLowerCase()) || ass.toLowerCase().includes(a.toLowerCase())
+    );
+
     if (!isValidAssembly && validAssemblies.length > 0) {
       return NextResponse.json(
         { error: `Security Error: Assembly "${ass}" does not belong to district "${dist}".` },
@@ -25,8 +50,27 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. ATOMIC DATABASE TRANSACTION & UNIQUE MEMBERSHIP ID GENERATION
+    // 2. ATOMIC DATABASE TRANSACTION & IDEMPOTENT MEMBERSHIP ID GENERATION
     const result = await prisma.$transaction(async (tx) => {
+      // Check if this exact member (name + mobile) is already registered
+      const existingMember = await tx.member.findFirst({
+        where: {
+          mobile: cleanPhone,
+          fullName: { equals: name.trim(), mode: 'insensitive' },
+        },
+      });
+
+      if (existingMember && existingMember.membershipId) {
+        const totalCount = await tx.member.count({ where: { status: 'ACTIVE' } });
+        return {
+          member: existingMember,
+          formattedId: existingMember.membershipId,
+          nextSeqNumber: parseInt(existingMember.membershipId.replace(/\D/g, '') || '100', 10),
+          totalCount,
+          isExisting: true,
+        };
+      }
+
       // Find or verify State, District, Assembly records in Master Data
       let stateObj = await tx.state.findFirst({ where: { code: 'UP' } });
       if (!stateObj) {
@@ -62,9 +106,9 @@ export async function POST(req: Request) {
       const member = await tx.member.create({
         data: {
           membershipId: formattedId,
-          fullName: name,
-          mobile: phone,
-          email: email || undefined,
+          fullName: name.trim(),
+          mobile: cleanPhone,
+          email: email ? email.trim() : undefined,
           gender: gender || 'Male',
           dob: dob ? new Date(dob) : new Date(1998, 0, 1),
           photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
@@ -75,7 +119,13 @@ export async function POST(req: Request) {
         },
       });
 
-      return { member, formattedId, nextSeqNumber, totalCount: activeCount + 1 };
+      return {
+        member,
+        formattedId,
+        nextSeqNumber,
+        totalCount: activeCount + 1,
+        isExisting: false,
+      };
     });
 
     const smsMessage = `[TVK-UP SMS Confirmed] Congratulations ${name}! Your TVK membership is active. Your official ID is: ${result.formattedId}. Welcome to TVK!`;
@@ -85,8 +135,8 @@ export async function POST(req: Request) {
       membershipNumber: result.formattedId,
       counterNumber: result.nextSeqNumber,
       totalCount: result.totalCount,
-      fullName: name,
-      phone: phone,
+      fullName: name.trim(),
+      phone: cleanPhone,
       email: email || 'N/A',
       gender: gender || 'Male',
       age: age || '25',
@@ -101,11 +151,12 @@ export async function POST(req: Request) {
       consentTimestamp: consentTimestamp || new Date().toISOString(),
       consentLanguage: consentLanguage || 'EN',
       smsConfirmation: smsMessage,
+      isExisting: result.isExisting,
     });
   } catch (err) {
     console.error('Direct member registration error:', err);
     return NextResponse.json(
-      { error: 'An unexpected database registration error occurred.' },
+      { error: 'An unexpected database registration error occurred. Please try again.' },
       { status: 500 }
     );
   }

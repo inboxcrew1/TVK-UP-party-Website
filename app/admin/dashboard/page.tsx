@@ -639,8 +639,12 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (e) {
+      console.warn('Logout API error:', e);
+    }
     router.push('/admin/login');
   };
 

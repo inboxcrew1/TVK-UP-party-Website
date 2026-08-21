@@ -42,10 +42,10 @@ export async function GET(req: Request) {
     if (search) {
       const cleanSearch = search.trim();
       whereClause.OR = [
-        { fullName: { contains: cleanSearch } },
-        { mobile: { contains: cleanSearch } },
-        { email: { contains: cleanSearch } },
-        { membershipId: { contains: cleanSearch } },
+        { fullName: { contains: cleanSearch, mode: 'insensitive' } },
+        { mobile: { contains: cleanSearch, mode: 'insensitive' } },
+        { email: { contains: cleanSearch, mode: 'insensitive' } },
+        { membershipId: { contains: cleanSearch, mode: 'insensitive' } },
       ];
     }
 

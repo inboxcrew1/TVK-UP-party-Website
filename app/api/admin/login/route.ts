@@ -92,6 +92,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Unable to sign in. Please check your credentials and try again.' },
+      { status: 500 }
+    );
   }
 }
