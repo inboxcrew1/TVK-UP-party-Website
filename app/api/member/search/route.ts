@@ -89,7 +89,10 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error('Member search API error:', err);
     return NextResponse.json(
-      { error: 'An error occurred while searching for member records.' },
+      {
+        error: 'An error occurred while searching for member records.',
+        details: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 }
     );
   }
