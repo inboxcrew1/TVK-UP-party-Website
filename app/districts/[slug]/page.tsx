@@ -47,7 +47,11 @@ export default function DynamicDistrictSEOPage() {
     };
 
     fetchAssemblyCounts();
-    const interval = setInterval(fetchAssemblyCounts, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchAssemblyCounts();
+      }
+    }, 6000);
     return () => {
       isMounted = false;
       clearInterval(interval);

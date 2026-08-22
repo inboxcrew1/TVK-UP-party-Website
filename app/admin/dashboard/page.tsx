@@ -218,9 +218,9 @@ export default function AdminDashboardPage() {
   // Load authoritative members directly from production database
   useEffect(() => {
     let active = true;
-    async function loadMembers() {
+    async function loadMembers(isBackground = false) {
       try {
-        setLoading(true);
+        if (!isBackground) setLoading(true);
         const queryParams = new URLSearchParams();
         if (statusFilter !== 'ALL') {
           queryParams.set('status', statusFilter);
@@ -248,12 +248,16 @@ export default function AdminDashboardPage() {
       } catch (err) {
         console.error('Error loading admin members from database:', err);
       } finally {
-        if (active) setLoading(false);
+        if (active && !isBackground) setLoading(false);
       }
     }
 
-    loadMembers();
-    const interval = setInterval(loadMembers, 5000);
+    loadMembers(false);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        loadMembers(true);
+      }
+    }, 8000);
 
     return () => {
       active = false;

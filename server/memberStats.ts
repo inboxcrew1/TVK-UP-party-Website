@@ -14,11 +14,33 @@ export interface CentralizedStats extends StatewideStats {
   currentId: string;
 }
 
+// In-memory cache layer for sub-millisecond public counter responses
+interface CacheStore {
+  timestamp: number;
+  statewide: StatewideStats;
+  allDistricts: Record<string, number>;
+}
+
+let memoryCache: CacheStore | null = null;
+const CACHE_TTL_MS = 3000; // 3 seconds TTL
+
+/**
+ * Instantly invalidate cache when new registrations or status changes occur
+ */
+export function invalidateMemberStatsCache() {
+  memoryCache = null;
+}
+
 /**
  * 1. Get Statewide Live Member Statistics from PostgreSQL Database
  * Source of Truth: prisma.member.count({ where: { status: 'ACTIVE' } })
  */
 export async function getLiveStatewideStats(): Promise<StatewideStats> {
+  const now = Date.now();
+  if (memoryCache && now - memoryCache.timestamp < CACHE_TTL_MS) {
+    return memoryCache.statewide;
+  }
+
   try {
     const activeMembers = await prisma.member.count({
       where: { status: 'ACTIVE' },
@@ -26,22 +48,34 @@ export async function getLiveStatewideStats(): Promise<StatewideStats> {
 
     const totalMembers = await prisma.member.count();
 
-    return {
+    const stats: StatewideStats = {
       totalMembers,
       activeMembers,
       totalDistricts: 75,
       totalAssemblies: 403,
       verifiedBooths: 0,
     };
+
+    if (!memoryCache) {
+      const allDistricts = await queryAllDistrictCountsFromDb();
+      memoryCache = { timestamp: now, statewide: stats, allDistricts };
+    } else {
+      memoryCache.statewide = stats;
+      memoryCache.timestamp = now;
+    }
+
+    return stats;
   } catch (error) {
     console.error('Error fetching statewide live stats from DB:', error);
-    return {
-      totalMembers: 0,
-      activeMembers: 0,
-      totalDistricts: 75,
-      totalAssemblies: 403,
-      verifiedBooths: 0,
-    };
+    return (
+      memoryCache?.statewide || {
+        totalMembers: 0,
+        activeMembers: 0,
+        totalDistricts: 75,
+        totalAssemblies: 403,
+        verifiedBooths: 0,
+      }
+    );
   }
 }
 
@@ -51,6 +85,16 @@ export async function getLiveStatewideStats(): Promise<StatewideStats> {
 export async function getDistrictMemberCount(districtNameOrId: string): Promise<number> {
   if (!districtNameOrId) return 0;
   const cleanName = districtNameOrId.trim();
+
+  // If memory cache is available, try memory lookup first
+  if (memoryCache && Date.now() - memoryCache.timestamp < CACHE_TTL_MS) {
+    const matchedKey = Object.keys(memoryCache.allDistricts).find(
+      (k) => k.toLowerCase() === cleanName.toLowerCase()
+    );
+    if (matchedKey) {
+      return memoryCache.allDistricts[matchedKey];
+    }
+  }
 
   try {
     const count = await prisma.member.count({
@@ -105,18 +149,15 @@ export async function getAssemblyMemberCount(
 }
 
 /**
- * 4. Get Statistics for ALL 75 UP Districts in a single optimized aggregation query
- * Guaranteed: Every one of the 75 UP districts is represented (defaults to 0).
+ * Helper to query all district counts directly from DB
  */
-export async function getAllDistrictMemberCounts(): Promise<Record<string, number>> {
-  // Initialize all 75 UP districts with 0
+async function queryAllDistrictCountsFromDb(): Promise<Record<string, number>> {
   const countsMap: Record<string, number> = {};
   for (const d of Object.keys(UP_DISTRICT_ASSEMBLIES)) {
     countsMap[d] = 0;
   }
 
   try {
-    // 1. Group active members by districtId
     const grouped = await prisma.member.groupBy({
       by: ['districtId'],
       where: { status: 'ACTIVE' },
@@ -126,7 +167,6 @@ export async function getAllDistrictMemberCounts(): Promise<Record<string, numbe
     });
 
     if (grouped.length > 0) {
-      // 2. Fetch district names for the populated IDs
       const districtIds = grouped.map((g) => g.districtId);
       const districts = await prisma.district.findMany({
         where: { id: { in: districtIds } },
@@ -138,7 +178,6 @@ export async function getAllDistrictMemberCounts(): Promise<Record<string, numbe
         distIdToName[d.id] = d.name;
       });
 
-      // 3. Map counts to matching UP district names (case-insensitive)
       grouped.forEach((g) => {
         const rawName = distIdToName[g.districtId];
         if (rawName) {
@@ -156,9 +195,26 @@ export async function getAllDistrictMemberCounts(): Promise<Record<string, numbe
 
     return countsMap;
   } catch (error) {
-    console.error('Error fetching all district member counts:', error);
+    console.error('Error querying all district counts:', error);
     return countsMap;
   }
+}
+
+/**
+ * 4. Get Statistics for ALL 75 UP Districts in a single optimized query with caching
+ */
+export async function getAllDistrictMemberCounts(): Promise<Record<string, number>> {
+  const now = Date.now();
+  if (memoryCache && now - memoryCache.timestamp < CACHE_TTL_MS) {
+    return memoryCache.allDistricts;
+  }
+
+  const allDistricts = await queryAllDistrictCountsFromDb();
+  if (memoryCache) {
+    memoryCache.allDistricts = allDistricts;
+    memoryCache.timestamp = now;
+  }
+  return allDistricts;
 }
 
 /**
@@ -188,7 +244,9 @@ export async function getDistrictAssembliesCounts(
       if (m.assembly?.name) {
         const aName = m.assembly.name;
         const matched = assemblies.find(
-          (a) => a.toLowerCase().includes(aName.toLowerCase()) || aName.toLowerCase().includes(a.toLowerCase())
+          (a) =>
+            a.toLowerCase().includes(aName.toLowerCase()) ||
+            aName.toLowerCase().includes(a.toLowerCase())
         );
         if (matched) {
           countsMap[matched] = (countsMap[matched] || 0) + 1;

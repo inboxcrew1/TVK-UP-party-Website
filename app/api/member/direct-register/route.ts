@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { getConstituenciesByDistrict } from '../../../../lib/upConstituencies';
+import { invalidateMemberStatsCache } from '../../../../server/memberStats';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,6 +128,9 @@ export async function POST(req: Request) {
         isExisting: false,
       };
     });
+
+    // Invalidate stats cache so all public counters update in real time
+    invalidateMemberStatsCache();
 
     const smsMessage = `[TVK-UP SMS Confirmed] Congratulations ${name}! Your TVK membership is active. Your official ID is: ${result.formattedId}. Welcome to TVK!`;
 

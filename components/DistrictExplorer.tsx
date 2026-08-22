@@ -49,7 +49,11 @@ export default function DistrictExplorer() {
     };
 
     fetchLiveDistrictCounts();
-    const interval = setInterval(fetchLiveDistrictCounts, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchLiveDistrictCounts();
+      }
+    }, 8000);
 
     return () => {
       isMounted = false;

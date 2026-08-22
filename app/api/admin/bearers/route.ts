@@ -15,13 +15,13 @@ export async function GET(req: Request) {
     const whereClause: Prisma.OfficeBearerWhereInput = {};
 
     if (admin.role === 'STATE_ADMIN') {
-      const stateIds = admin.scopes.map((s: AdminScopeItem) => s.stateId).filter((id): id is string => !!id);
+      const stateIds = (admin.scopes || []).map((s: AdminScopeItem) => s.stateId).filter((id): id is string => !!id);
       whereClause.stateId = { in: stateIds };
     } else if (admin.role === 'DISTRICT_ADMIN') {
-      const districtIds = admin.scopes.map((s: AdminScopeItem) => s.districtId).filter((id): id is string => !!id);
+      const districtIds = (admin.scopes || []).map((s: AdminScopeItem) => s.districtId).filter((id): id is string => !!id);
       whereClause.districtId = { in: districtIds };
     } else if (admin.role === 'ASSEMBLY_ADMIN') {
-      const assemblyIds = admin.scopes.map((s: AdminScopeItem) => s.assemblyId).filter((id): id is string => !!id);
+      const assemblyIds = (admin.scopes || []).map((s: AdminScopeItem) => s.assemblyId).filter((id): id is string => !!id);
       whereClause.assemblyId = { in: assemblyIds };
     } else if (admin.role !== 'SUPER_ADMIN' && admin.role !== 'NATIONAL_ADMIN') {
       return NextResponse.json({ error: 'Forbidden: Scoped role configuration missing.' }, { status: 403 });

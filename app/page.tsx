@@ -28,7 +28,11 @@ export default function Home() {
       }
     };
     fetchLiveStats();
-    const interval = setInterval(fetchLiveStats, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchLiveStats();
+      }
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 

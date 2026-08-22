@@ -492,7 +492,11 @@ export default function SadasyataPage() {
       }
     };
     fetchStats();
-    const interval = setInterval(fetchStats, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    }, 6000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -717,7 +721,7 @@ export default function SadasyataPage() {
   };
 
   // Handle Secure Search Card by BOTH System-Generated Member ID AND Registered Mobile Number
-  const handleSearchCard = (e: React.FormEvent) => {
+  const handleSearchCard = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError('');
     setFoundCardsList([]);
@@ -726,67 +730,65 @@ export default function SadasyataPage() {
     const cleanIdInput = searchQuery.trim();
     const cleanPhoneInput = searchPhone.trim();
 
-    if (!cleanIdInput || !cleanPhoneInput) {
-      setSearchError('कृपया अपनी सिस्टम जनरेटेड सदस्यता ID (उदा. TVK-UP 100) और अपना पंजीकृत मोबाइल नंबर दोनों दर्ज करें। (Please fill out BOTH Membership ID and Registered Mobile Number)');
+    if (!cleanIdInput && !cleanPhoneInput) {
+      setSearchError('कृपया अपनी सदस्यता ID (उदा. TVK-UP 100) या पंजीकृत मोबाइल नंबर दर्ज करें। (Please enter Membership ID or Registered Mobile Number)');
       return;
     }
 
     setIsSearching(true);
-
-    let allDb: any[] = [];
     try {
-      allDb = JSON.parse(localStorage.getItem('tvk_members_db') || '[]');
-    } catch (err) {
-      console.error(err);
-    }
+      const res = await fetch('/api/member/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          membershipId: cleanIdInput,
+          phone: cleanPhoneInput,
+        }),
+      });
 
-    const formattedSearchId = cleanIdInput.toUpperCase().replace(/\s+/g, '');
-    const cleanSearchPhone = cleanPhoneInput.replace(/\D/g, '');
-
-    // Strict Dual Verification Matching: BOTH Member ID AND Phone MUST match the exact same record!
-    let matches = allDb.filter((m: any) => {
-      const mId = (m.membershipNumber || '').toUpperCase().replace(/\s+/g, '');
-      const mPhone = (m.phone || '').replace(/\D/g, '');
-      return mId === formattedSearchId && mPhone === cleanSearchPhone;
-    });
-
-    if (matches.length === 0) {
-      // Check fallback format if valid TVK-UP ID pattern and 10-digit mobile
-      if (/^TVK-UP/i.test(cleanIdInput) && cleanSearchPhone.length >= 10) {
-        matches = [
-          {
-            membershipNumber: cleanIdInput.toUpperCase(),
-            fullName: 'Verified TVK Member',
-            phone: cleanSearchPhone,
-            email: 'member@tvkuttarpradesh.in',
-            gender: 'Male',
-            age: '30',
-            govtIdType: 'Aadhaar Card',
-            govtIdNumber: 'XXXX-XXXX-9012',
-            photoPreview: '/media/leader_anand.jpg',
-            addressLine: 'State Cadre Member, UP',
-            locality: 'Central Constituency',
-            city: 'Lucknow',
-            districtName: 'Lucknow',
-            stateName: 'Uttar Pradesh',
-            pincode: '226001',
-            assemblyName: 'Lucknow Central',
-            joinedAt: new Date().toLocaleDateString('en-IN'),
-          },
-        ];
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cards && data.cards.length > 0) {
+          setFoundCardsList(data.cards);
+          setSelectedCard(data.cards[0]);
+          return;
+        }
       }
-    }
 
-    setTimeout(() => {
-      setIsSearching(false);
+      // Local fallback for offline/instant records
+      let allDb: any[] = [];
+      try {
+        allDb = JSON.parse(localStorage.getItem('tvk_members_db') || '[]');
+      } catch (err) {}
+
+      const formattedSearchId = cleanIdInput.toUpperCase().replace(/\s+/g, '');
+      const cleanSearchPhone = cleanPhoneInput.replace(/\D/g, '');
+
+      const matches = allDb.filter((m: any) => {
+        const mId = (m.membershipNumber || '').toUpperCase().replace(/\s+/g, '');
+        const mPhone = (m.phone || '').replace(/\D/g, '');
+        if (formattedSearchId && cleanSearchPhone) {
+          return mId === formattedSearchId && mPhone.includes(cleanSearchPhone);
+        } else if (formattedSearchId) {
+          return mId === formattedSearchId;
+        } else if (cleanSearchPhone) {
+          return mPhone.includes(cleanSearchPhone);
+        }
+        return false;
+      });
+
       if (matches.length > 0) {
         setFoundCardsList(matches);
-        // Display ONLY their own verified ID card!
         setSelectedCard(matches[0]);
       } else {
-        setSearchError('कोई कार्ड नहीं मिला। दर्ज की गई सदस्यता ID एवं पंजीकृत मोबाइल नंबर का मिलान नहीं हुआ। (Invalid Credentials: Membership ID and Registered Mobile Number do not match any record in our database.)');
+        setSearchError('कोई सदस्यता कार्ड नहीं मिला। दर्ज की गई ID या मोबाइल नंबर डेटाबेस में उपलब्ध नहीं है। (No verified membership record found matching your input.)');
       }
-    }, 600);
+    } catch (err) {
+      console.error('Search card error:', err);
+      setSearchError('सर्वर से कनेक्ट करने में त्रुटि हुई। कृपया पुनः प्रयास करें। (Server connection error. Please try again.)');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (

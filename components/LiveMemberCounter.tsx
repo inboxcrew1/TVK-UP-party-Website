@@ -42,7 +42,11 @@ export default function LiveMemberCounter({
     };
 
     fetchRealDatabaseCount();
-    const interval = setInterval(fetchRealDatabaseCount, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchRealDatabaseCount();
+      }
+    }, 6000);
 
     return () => {
       isMounted = false;

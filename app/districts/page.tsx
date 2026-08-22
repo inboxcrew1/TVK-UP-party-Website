@@ -51,7 +51,11 @@ export default function DistrictsPage() {
     };
 
     fetchDbCounts();
-    const interval = setInterval(fetchDbCounts, 5000);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchDbCounts();
+      }
+    }, 6000);
     return () => clearInterval(interval);
   }, [selectedDistrict, selectedAssembly]);
 
