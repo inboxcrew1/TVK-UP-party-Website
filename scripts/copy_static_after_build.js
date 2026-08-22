@@ -27,14 +27,13 @@ function copyDirRecursive(src, dest) {
 
 const nextStaticDir = path.join(__dirname, '..', '.next', 'static');
 const publicNextStaticDir = path.join(__dirname, '..', 'public', '_next', 'static');
+const rootNextStaticDir = path.join(__dirname, '..', '_next', 'static');
 
-console.log('--- POST-BUILD: POPULATING public/_next/static FOR LITESPEED WEB SERVER ---');
-console.log(`Copying from: ${nextStaticDir}`);
-console.log(`To:           ${publicNextStaticDir}`);
-
+console.log('--- POST-BUILD: POPULATING STATIC DIRECTORIES FOR LITESPEED WEB SERVER ---');
 try {
   copyDirRecursive(nextStaticDir, publicNextStaticDir);
-  console.log('SUCCESS: public/_next/static has been fully populated with active CSS and JS chunks!');
+  copyDirRecursive(nextStaticDir, rootNextStaticDir);
+  console.log('SUCCESS: Static assets synchronized to both public/_next/static and _next/static!');
 } catch (err) {
   console.error('Error copying static assets:', err);
 }

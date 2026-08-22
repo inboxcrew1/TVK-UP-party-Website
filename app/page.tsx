@@ -11,9 +11,6 @@ import DigitalCardMockup from '../components/DigitalCardMockup';
 import { useLanguage } from '../context/LanguageContext';
 import Footer from '../components/Footer';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function Home() {
   const { t } = useLanguage();
   const [liveCount, setLiveCount] = useState<number | null>(null);

@@ -1,20 +1,23 @@
-# Hostinger / LiteSpeed Web Server Proxy Configuration for Next.js
+# Hostinger / LiteSpeed Web Server Proxy & Static Rewrites
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
-  # Allow direct access to uploaded media files if they exist physically
-  RewriteCond %{REQUEST_URI} ^/media/ [NC]
+  # 1. Directly serve physical static files if they exist
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
 
-  # Explicitly force LiteSpeed to proxy all /_next/ static & chunk requests to Node.js
-  RewriteCond %{REQUEST_URI} ^/_next/ [NC]
-  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+  # 2. Check if requested /_next/static file exists in .next/static/
+  RewriteCond %{DOCUMENT_ROOT}/.next/static/$1 -f
+  RewriteRule ^_next/static/(.*)$ .next/static/$1 [L]
 
-  # Proxy all page and API requests to Node.js backend
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+  # 3. Check if requested /_next/static file exists in public/_next/static/
+  RewriteCond %{DOCUMENT_ROOT}/public/_next/static/$1 -f
+  RewriteRule ^_next/static/(.*)$ public/_next/static/$1 [L]
+
+  # 4. Check if requested /_next/static file exists in _next/static/
+  RewriteCond %{DOCUMENT_ROOT}/_next/static/$1 -f
+  RewriteRule ^_next/static/(.*)$ _next/static/$1 [L]
 </IfModule>
 
 # MIME type fallback definitions
@@ -30,8 +33,18 @@
   AddType image/webp .webp
 </IfModule>
 
-# Security and cache headers
+# Cache and security headers
 <IfModule mod_headers.c>
+  # Static chunk files: 1-year immutable cache
+  <FilesMatch "\.(css|js|woff2|woff|svg|png|jpg|jpeg|webp|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML pages: always revalidate
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate, s-maxage=0"
+  </FilesMatch>
+
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
