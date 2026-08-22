@@ -1,13 +1,23 @@
-# Hostinger / LiteSpeed Web Server Configuration for Next.js
+# Hostinger / LiteSpeed Web Server Proxy Configuration for Next.js
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteBase /
 
-  # Serve existing physical files directly (media, favicon, etc.)
+  # Allow direct access to uploaded media files if they exist physically
+  RewriteCond %{REQUEST_URI} ^/media/ [NC]
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
+
+  # Explicitly force LiteSpeed to proxy all /_next/ static & chunk requests to Node.js
+  RewriteCond %{REQUEST_URI} ^/_next/ [NC]
+  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+
+  # Proxy all page and API requests to Node.js backend
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
 </IfModule>
 
-# MIME Type declarations for Next.js assets
+# MIME type fallback definitions
 <IfModule mod_mime.c>
   AddType text/css .css
   AddType application/javascript .js
@@ -20,15 +30,9 @@
   AddType image/webp .webp
 </IfModule>
 
-# Browser and CDN Caching rules
+# Security and cache headers
 <IfModule mod_headers.c>
-  # Immutable cache for static assets
-  <FilesMatch "\.(css|js|woff2|woff|svg|png|jpg|jpeg|webp|ico)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </FilesMatch>
-
-  # Prevent HTML from being cached permanently by CDN / Edge
-  <FilesMatch "\.(html|htm)$">
-    Header set Cache-Control "public, max-age=0, must-revalidate, s-maxage=0"
-  </FilesMatch>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
