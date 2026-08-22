@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/clean_public_next.js",
     "build": "prisma generate && next build",
+    "postbuild": "node scripts/copy_static_after_build.js",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
