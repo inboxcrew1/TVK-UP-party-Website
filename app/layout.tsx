@@ -77,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="hi" className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
+    <html lang="hi" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -96,7 +96,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
         />
       </head>
-      <body className="bg-[#040105] text-slate-100 antialiased selection:bg-amber-400 selection:text-slate-950 font-sans">
+      <body suppressHydrationWarning className="bg-[#040105] text-slate-100 antialiased selection:bg-amber-400 selection:text-slate-950 font-sans">
         <LanguageProvider>
           {children}
         </LanguageProvider>

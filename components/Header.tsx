@@ -66,9 +66,15 @@ export default function Header() {
           {/* Left: TVK Logo with UTTAR PRADESH */}
           <Link href="/" className="flex items-center gap-2.5 group shrink-0" onClick={() => setMobileMenuOpen(false)}>
             <div className="w-14 sm:w-16 h-10 rounded-lg overflow-hidden border-2 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] shrink-0 bg-slate-950 flex items-center justify-center transition-transform group-hover:scale-105">
-              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
+              <img
+                loading="lazy"
+                decoding="async"
+                src="/media/tvk_official_logo.jpg"
                 alt="TVK Official Red-Yellow Elephant Flag Logo"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/media/tvk_brand_icon.jpg';
+                }}
               />
             </div>
             <div className="flex flex-col justify-center text-left">

@@ -1,19 +1,48 @@
 import { PrismaClient } from '@prisma/client';
 
-// Automatically append pgbouncer=true if connecting to Supabase transaction pooler (port 6543)
-// This prevents PostgreSQL error 42P05: "prepared statement already exists" with PgBouncer
+// Automatically format Supabase PgBouncer URL with required parameters
 let dbUrl = process.env.DATABASE_URL || '';
-if (dbUrl && (dbUrl.includes(':6543') || dbUrl.includes('pooler.supabase.com')) && !dbUrl.includes('pgbouncer=true')) {
-  dbUrl += dbUrl.includes('?') ? '&pgbouncer=true' : '?pgbouncer=true';
+if (dbUrl && (dbUrl.includes(':6543') || dbUrl.includes('pooler.supabase.com'))) {
+  const urlObj = new URL(dbUrl);
+  if (!urlObj.searchParams.has('pgbouncer')) {
+    urlObj.searchParams.set('pgbouncer', 'true');
+  }
+  if (!urlObj.searchParams.has('connection_limit')) {
+    urlObj.searchParams.set('connection_limit', '10');
+  }
+  if (!urlObj.searchParams.has('pool_timeout')) {
+    urlObj.searchParams.set('pool_timeout', '10');
+  }
+  if (!urlObj.searchParams.has('connect_timeout')) {
+    urlObj.searchParams.set('connect_timeout', '10');
+  }
+  dbUrl = urlObj.toString();
 }
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as { prisma?: PrismaClient };
 
 export const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma ??
   new PrismaClient({
     datasourceUrl: dbUrl || undefined,
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 
 globalForPrisma.prisma = prisma;
+
+/**
+ * Safe database query wrapper with automatic 1-time retry for resilience against dropped sockets
+ */
+export async function withDbRetry<T>(queryFn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await queryFn();
+  } catch (firstErr) {
+    console.warn('First DB query attempt failed, retrying once...', firstErr);
+    try {
+      return await queryFn();
+    } catch (secondErr) {
+      console.error('Second DB query attempt failed:', secondErr);
+      return fallback;
+    }
+  }
+}
