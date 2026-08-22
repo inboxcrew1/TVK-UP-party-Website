@@ -1,27 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { updateSession } from "./utils/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
-  try {
-    return await updateSession(request);
-  } catch (err) {
-    console.warn("Root middleware skipped on error:", err);
-    return NextResponse.next();
-  }
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Set essential security headers
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  return response;
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image  (image optimization)
-     * - favicon.ico, sitemap.xml, robots.txt
-     * - /media/* (public media assets)
-     * - /api/member/* (public registration APIs)
-     * - /api/geo/*   (public geography APIs)
-     * - /api/cms/*   (public CMS APIs)
+     * Match all paths except static assets, media, and images
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|media/|api/member/|api/geo/|api/cms/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|media/).*)",
   ],
 };
