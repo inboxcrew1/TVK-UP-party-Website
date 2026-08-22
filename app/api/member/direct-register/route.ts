@@ -98,33 +98,64 @@ export async function POST(req: Request) {
         });
       }
 
-      // Calculate next sequential membership number based on active database count
-      const activeCount = await tx.member.count({ where: { status: 'ACTIVE' } });
-      const nextSeqNumber = 100 + activeCount + 1;
-      const formattedId = `TVK-UP ${nextSeqNumber}`;
-
-      // Create Member record
-      const member = await tx.member.create({
-        data: {
-          membershipId: formattedId,
-          fullName: name.trim(),
-          mobile: cleanPhone,
-          email: email ? email.trim() : undefined,
-          gender: gender || 'Male',
-          dob: dob ? new Date(dob) : new Date(1998, 0, 1),
-          photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
-          stateId: stateObj.id,
-          districtId: distObj.id,
-          assemblyId: assObj.id,
-          status: 'ACTIVE',
-        },
+      // Calculate next sequential membership number based on the highest existing ID ever assigned
+      // (Monotonically increasing: never decreases if a member is inactive or removed)
+      const existingMembersWithId = await tx.member.findMany({
+        where: { membershipId: { not: null } },
+        select: { membershipId: true },
       });
+
+      let maxSeq = 100;
+      for (const m of existingMembersWithId) {
+        if (m.membershipId) {
+          const num = parseInt(m.membershipId.replace(/\D/g, ''), 10);
+          if (!isNaN(num) && num > maxSeq) {
+            maxSeq = num;
+          }
+        }
+      }
+
+      let member: any = null;
+      let nextSeqNumber = maxSeq + 1;
+      let formattedId = `TVK-UP ${nextSeqNumber}`;
+
+      // Concurrency retry loop for atomic race-condition safety
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          member = await tx.member.create({
+            data: {
+              membershipId: formattedId,
+              fullName: name.trim(),
+              mobile: cleanPhone,
+              email: email ? email.trim() : undefined,
+              gender: gender || 'Male',
+              dob: dob ? new Date(dob) : new Date(1998, 0, 1),
+              photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
+              stateId: stateObj.id,
+              districtId: distObj.id,
+              assemblyId: assObj.id,
+              status: 'ACTIVE',
+            },
+          });
+          break;
+        } catch (createErr: any) {
+          if (createErr?.code === 'P2002' && attempt < 4) {
+            // Unique constraint hit due to simultaneous race condition -> increment & retry
+            nextSeqNumber += 1;
+            formattedId = `TVK-UP ${nextSeqNumber}`;
+          } else {
+            throw createErr;
+          }
+        }
+      }
+
+      const activeCount = await tx.member.count({ where: { status: 'ACTIVE' } });
 
       return {
         member,
         formattedId,
         nextSeqNumber,
-        totalCount: activeCount + 1,
+        totalCount: activeCount,
         isExisting: false,
       };
     });
