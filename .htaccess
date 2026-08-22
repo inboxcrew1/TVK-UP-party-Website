@@ -1,0 +1,38 @@
+# Hostinger / LiteSpeed Web Server Configuration for Next.js
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Serve existing physical files directly (CSS, JS, images, fonts)
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # Route _next/static to public/_next/static if requested
+  RewriteCond %{DOCUMENT_ROOT}/public/$1 -f
+  RewriteRule ^(.*)$ /public/$1 [L]
+</IfModule>
+
+# MIME Type declarations for Next.js assets
+<IfModule mod_mime.c>
+  AddType text/css .css
+  AddType application/javascript .js
+  AddType image/svg+xml .svg
+  AddType application/json .json
+  AddType font/woff2 .woff2
+  AddType font/woff .woff
+  AddType image/jpeg .jpg .jpeg
+  AddType image/png .png
+  AddType image/webp .webp
+</IfModule>
+
+# Browser and CDN Caching rules
+<IfModule mod_headers.c>
+  # Immutable cache for static chunks
+  <FilesMatch "\.(css|js|woff2|woff|svg|png|jpg|jpeg|webp|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # Prevent HTML from being cached permanently
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate, s-maxage=0"
+  </FilesMatch>
+</IfModule>
