@@ -17,8 +17,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(.*)",
+        // For all HTML routes: tell CDNs and Edge caches to always serve fresh HTML
+        // so they never serve stale HTML referencing obsolete CSS/JS chunk hashes.
+        source: "/((?!_next/static|_next/image|media/).*)",
         headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate, s-maxage=0",
+          },
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
