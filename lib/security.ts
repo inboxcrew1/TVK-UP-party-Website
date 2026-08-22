@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012'; // 32 bytes key
+const RAW_ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
+const KEY_BUFFER = crypto.createHash('sha256').update(RAW_ENCRYPTION_KEY).digest();
 const IV_LENGTH = 12; // Standard 96-bit IV for AES-GCM
 
 /**
@@ -10,7 +11,7 @@ const IV_LENGTH = 12; // Standard 96-bit IV for AES-GCM
 export function encrypt(text: string): string {
   if (!text) return text;
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY), iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', KEY_BUFFER, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag().toString('hex');
@@ -29,7 +30,7 @@ export function decrypt(text: string): string {
     const iv = Buffer.from(parts[0], 'hex');
     const authTag = Buffer.from(parts[1], 'hex');
     const encryptedText = parts[2];
-    const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY), iv);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', KEY_BUFFER, iv);
     decipher.setAuthTag(authTag);
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

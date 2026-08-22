@@ -3,20 +3,24 @@ import { PrismaClient } from '@prisma/client';
 // Automatically format Supabase PgBouncer URL with required parameters
 let dbUrl = process.env.DATABASE_URL || '';
 if (dbUrl && (dbUrl.includes(':6543') || dbUrl.includes('pooler.supabase.com'))) {
-  const urlObj = new URL(dbUrl);
-  if (!urlObj.searchParams.has('pgbouncer')) {
-    urlObj.searchParams.set('pgbouncer', 'true');
+  try {
+    const urlObj = new URL(dbUrl);
+    if (!urlObj.searchParams.has('pgbouncer')) {
+      urlObj.searchParams.set('pgbouncer', 'true');
+    }
+    if (!urlObj.searchParams.has('connection_limit')) {
+      urlObj.searchParams.set('connection_limit', '10');
+    }
+    if (!urlObj.searchParams.has('pool_timeout')) {
+      urlObj.searchParams.set('pool_timeout', '10');
+    }
+    if (!urlObj.searchParams.has('connect_timeout')) {
+      urlObj.searchParams.set('connect_timeout', '10');
+    }
+    dbUrl = urlObj.toString();
+  } catch {
+    // If URL parsing fails, fallback to raw dbUrl
   }
-  if (!urlObj.searchParams.has('connection_limit')) {
-    urlObj.searchParams.set('connection_limit', '10');
-  }
-  if (!urlObj.searchParams.has('pool_timeout')) {
-    urlObj.searchParams.set('pool_timeout', '10');
-  }
-  if (!urlObj.searchParams.has('connect_timeout')) {
-    urlObj.searchParams.set('connect_timeout', '10');
-  }
-  dbUrl = urlObj.toString();
 }
 
 const globalForPrisma = global as unknown as { prisma?: PrismaClient };
