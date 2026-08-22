@@ -2,13 +2,9 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Serve existing physical files directly (CSS, JS, images, fonts)
+  # Serve existing physical files directly (media, favicon, etc.)
   RewriteCond %{REQUEST_FILENAME} -f
   RewriteRule ^ - [L]
-
-  # Route _next/static to public/_next/static if requested
-  RewriteCond %{DOCUMENT_ROOT}/public/$1 -f
-  RewriteRule ^(.*)$ /public/$1 [L]
 </IfModule>
 
 # MIME Type declarations for Next.js assets
@@ -26,12 +22,12 @@
 
 # Browser and CDN Caching rules
 <IfModule mod_headers.c>
-  # Immutable cache for static chunks
+  # Immutable cache for static assets
   <FilesMatch "\.(css|js|woff2|woff|svg|png|jpg|jpeg|webp|ico)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # Prevent HTML from being cached permanently
+  # Prevent HTML from being cached permanently by CDN / Edge
   <FilesMatch "\.(html|htm)$">
     Header set Cache-Control "public, max-age=0, must-revalidate, s-maxage=0"
   </FilesMatch>

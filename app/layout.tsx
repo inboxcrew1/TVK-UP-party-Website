@@ -17,6 +17,9 @@ const outfit = Outfit({
   fallback: ['system-ui', '-apple-system', 'sans-serif'],
 });
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'TVK Uttar Pradesh | Tamizhaga Vettri Kazhagam – Uttar Pradesh',
   description: 'TVK Uttar Pradesh — official digital platform for primary membership registration, district cadre explorer, leadership, ideology, and updates of Tamizhaga Vettri Kazhagam in UP.',
