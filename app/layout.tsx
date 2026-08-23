@@ -1,21 +1,9 @@
 import './globals.css';
-import { Inter, Outfit } from 'next/font/google';
 import { LanguageProvider } from '../context/LanguageContext';
 import type { Metadata } from 'next';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-});
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-  fallback: ['system-ui', '-apple-system', 'sans-serif'],
-});
+const inter = { variable: 'font-sans' };
+const outfit = { variable: 'font-display' };
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

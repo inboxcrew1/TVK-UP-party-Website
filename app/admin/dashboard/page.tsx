@@ -31,6 +31,7 @@ import {
   ExternalLink,
   Camera,
   RefreshCw,
+  Printer,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -200,11 +201,32 @@ export default function AdminDashboardPage() {
   const [appointDistricts, setAppointDistricts] = useState<any[]>([]);
   const [appointAssemblies, setAppointAssemblies] = useState<any[]>([]);
 
+  const [isDownloadingBearerCard, setIsDownloadingBearerCard] = useState(false);
+  const [bearerCardQr, setBearerCardQr] = useState<string>('');
+
   const [bearerStateId, setBearerStateId] = useState('');
   const [bearerDistrictId, setBearerDistrictId] = useState('');
   const [bearerAssemblyId, setBearerAssemblyId] = useState('');
 
   const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  // Generate QR Code for Office Bearer ID Pass
+  useEffect(() => {
+    if (selectedBearerCard) {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://tvkuttarpradesh.org';
+      const obId = `TVK-OB-2026-${selectedBearerCard.id.slice(0, 8).toUpperCase()}`;
+      const verifyUrl = `${baseUrl}/verify?id=${encodeURIComponent(obId)}&name=${encodeURIComponent(selectedBearerCard.name || '')}&post=${encodeURIComponent(selectedBearerCard.post?.title || 'Office Bearer')}`;
+      import('qrcode').then((QRCode) => {
+        QRCode.toDataURL(verifyUrl, {
+          margin: 1,
+          width: 140,
+          color: { dark: '#0F172A', light: '#FFFFFF' }
+        }).then(setBearerCardQr).catch(() => {});
+      }).catch(() => {});
+    } else {
+      setBearerCardQr('');
+    }
+  }, [selectedBearerCard]);
 
   // Synchronize members from DB + LocalStorage (Dual Sync to catch 100% of registrations)
   const [dbStats, setDbStats] = useState<{
@@ -265,12 +287,16 @@ export default function AdminDashboardPage() {
     };
   }, [statusFilter, searchQuery, reloadTrigger, router]);
 
-  // Load Office Bearers when tab active
+  // Load Office Bearers & Party Posts when tab is active or Appoint Modal opens
   useEffect(() => {
-    if (activeTab === 'BEARERS') {
+    if (activeTab === 'BEARERS' || appointModalOpen) {
       loadBearersAndPosts();
     }
-  }, [activeTab]);
+  }, [activeTab, appointModalOpen]);
+
+  useEffect(() => {
+    loadBearersAndPosts();
+  }, []);
 
   useEffect(() => {
     async function loadStates() {
@@ -321,6 +347,38 @@ export default function AdminDashboardPage() {
       console.error('Error loading bearers:', err);
     } finally {
       setBearersLoading(false);
+    }
+  };
+
+  // Direct PNG Download for Office Bearer ID Card (High-Definition 3x Canvas Capture)
+  const downloadBearerCardAsPng = async () => {
+    const cardEl = document.getElementById('printable-bearer-card');
+    if (!cardEl || !selectedBearerCard) return;
+
+    setIsDownloadingBearerCard(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardEl, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      const safeName = (selectedBearerCard.name || 'Bearer').replace(/\s+/g, '_');
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TVK-Office-Bearer-${safeName}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Download bearer card error:', err);
+      alert('Could not generate image download. Please try Print Pass instead.');
+    } finally {
+      setIsDownloadingBearerCard(false);
     }
   };
 
@@ -1407,8 +1465,20 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Signatory */}
-                  <div className="w-full flex justify-end items-center pt-0.5">
+                  {/* QR Verification & Signatory Row */}
+                  <div className="w-full flex justify-between items-center pt-1 border-t border-stone-200">
+                    <div className="flex items-center gap-1.5">
+                      {bearerCardQr ? (
+                        <img loading="eager" decoding="sync" src={bearerCardQr} alt="QR Code" className="w-10 h-10 border border-stone-300 rounded p-0.5 bg-white shadow-sm" />
+                      ) : (
+                        <div className="w-10 h-10 bg-stone-200 rounded animate-pulse" />
+                      )}
+                      <div className="text-left">
+                        <span className="text-[7.5px] text-emerald-700 font-extrabold uppercase block leading-none">✓ Verified</span>
+                        <span className="text-[6.5px] text-slate-500 font-mono block">OFFICER PASS</span>
+                      </div>
+                    </div>
+
                     <div className="text-right">
                       <span className="text-[10px] text-[#800000] font-script font-bold italic block leading-none">
                         Thalapathy Vijay
@@ -1430,18 +1500,30 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* CARD ACTIONS */}
-              <div className="w-full max-w-[290px] flex justify-between items-center pt-1">
+              <div className="w-full max-w-[290px] flex items-center gap-2 pt-1">
+                <button
+                  onClick={downloadBearerCardAsPng}
+                  disabled={isDownloadingBearerCard}
+                  className="flex-1 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 uppercase font-display shadow-md active:scale-95"
+                >
+                  {isDownloadingBearerCard ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Saving...</span></>
+                  ) : (
+                    <><Download className="w-3.5 h-3.5 stroke-[2.5]" /><span>Download ID</span></>
+                  )}
+                </button>
                 <button
                   onClick={() => window.print()}
-                  className="bg-[#A00000] hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 uppercase font-display shadow"
+                  className="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1 border border-amber-400/30"
                 >
-                  <Download className="w-3.5 h-3.5" /> Print Pass
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print</span>
                 </button>
                 <button
                   onClick={() => setSelectedBearerCard(null)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-xl"
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-2 rounded-xl"
                 >
-                  Close Pass
+                  Close
                 </button>
               </div>
             </motion.div>
