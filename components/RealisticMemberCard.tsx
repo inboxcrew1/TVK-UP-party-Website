@@ -188,13 +188,13 @@ export default function RealisticMemberCard({
   }, [membershipNumber, fullName, phone, email, gender, age, displayDob, photoPreview, cityName, districtName, stateName, joinedAt]);
 
   // ============================================================
-  // HIGH-DEFINITION 2D CANVAS CARD RENDERER (1440×906px — 3× CR80)
+  // HIGH-DEFINITION 2D CANVAS CARD RENDERER (1440×907px — Exact 3.375:2.125 CR80)
   // Direct Native HTML5 Canvas 2D Engine with zero external dependencies
-  // Guarantees 100% reliability across all desktop and mobile browsers
+  // Pixel-perfect match to on-screen card layout, fonts, colors, and proportions
   // ============================================================
   const renderCardToCanvas = async (): Promise<HTMLCanvasElement> => {
     const W = 1440;
-    const H = 906;
+    const H = 907; // Exact 1440 / (3.375 / 2.125) = 906.66px
     const canvas = document.createElement('canvas');
     canvas.width = W;
     canvas.height = H;
@@ -238,81 +238,100 @@ export default function RealisticMemberCard({
     roundRect(0, 0, W, H, 40);
     ctx.clip();
 
-    // 2. Base Background: Deep Maroon to Dark Slate Gradient
+    // 2. Base Background: Deep Maroon to Slate 950 Gradient (Matching bg-gradient-to-br from-[#A00000] via-slate-950 to-slate-900)
     const bgGrad = ctx.createLinearGradient(0, 0, W, H);
     bgGrad.addColorStop(0, '#A00000');
-    bgGrad.addColorStop(0.35, '#0B0F19');
+    bgGrad.addColorStop(0.38, '#0B0F19');
     bgGrad.addColorStop(1, '#020617');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
     // Radial Gold Glow in top-right
-    const glow = ctx.createRadialGradient(W * 0.85, 0, 10, W * 0.85, 0, W * 0.6);
-    glow.addColorStop(0, 'rgba(251, 191, 36, 0.20)');
-    glow.addColorStop(0.6, 'rgba(160, 0, 0, 0.10)');
+    const glow = ctx.createRadialGradient(W * 0.85, 0, 10, W * 0.85, 0, W * 0.65);
+    glow.addColorStop(0, 'rgba(251, 191, 36, 0.18)');
+    glow.addColorStop(0.55, 'rgba(160, 0, 0, 0.08)');
     glow.addColorStop(1, 'transparent');
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, H);
 
-    // 3. Background Watermark (Thalapathy Vijay) on the right side
+    // 3. Background Watermark (Thalapathy Vijay) with Seamless Radial Gradient Mask
     const watermarkImg = await loadImage('/media/thalapathy_vijay_watermark.jpg');
     if (watermarkImg) {
-      ctx.save();
-      ctx.globalAlpha = 0.30;
-      const wmSize = 540;
-      const wmX = W - wmSize - 10;
-      const wmY = (H - wmSize) / 2 - 10;
-      ctx.drawImage(watermarkImg, wmX, wmY, wmSize, wmSize);
-      ctx.restore();
+      try {
+        const wmW = 560;
+        const wmH = 560;
+        const wmX = W - wmW + 40;
+        const wmY = (H - wmH) / 2 - 20;
+
+        // Create offscreen canvas for smooth circular/radial masking
+        const wmCanvas = document.createElement('canvas');
+        wmCanvas.width = wmW;
+        wmCanvas.height = wmH;
+        const wmCtx = wmCanvas.getContext('2d');
+        if (wmCtx) {
+          wmCtx.drawImage(watermarkImg, 0, 0, wmW, wmH);
+          // Destination-In Radial Gradient Mask to eliminate all rectangular edges
+          const mask = wmCtx.createRadialGradient(wmW * 0.65, wmH * 0.5, wmW * 0.15, wmW * 0.65, wmH * 0.5, wmW * 0.52);
+          mask.addColorStop(0, 'rgba(0, 0, 0, 1)');
+          mask.addColorStop(0.5, 'rgba(0, 0, 0, 0.85)');
+          mask.addColorStop(0.85, 'rgba(0, 0, 0, 0.3)');
+          mask.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          wmCtx.globalCompositeOperation = 'destination-in';
+          wmCtx.fillStyle = mask;
+          wmCtx.fillRect(0, 0, wmW, wmH);
+
+          // Draw softly masked watermark onto card
+          ctx.save();
+          ctx.globalAlpha = 0.50;
+          ctx.drawImage(wmCanvas, wmX, wmY);
+          ctx.restore();
+        }
+      } catch {
+        // Safe fallback
+      }
     }
 
-    // 4. Outer Gold Border
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = '#FBBF24';
-    roundRect(5, 5, W - 10, H - 10, 40);
-    ctx.stroke();
-
     // ============================================================
-    // TOP HEADER
+    // TOP HEADER (y: 35 -> 145)
     // ============================================================
-    const headerY = 40;
+    const headerY = 36;
 
-    // TVK Flag Logo box (x: 45, y: 40, w: 120, h: 80)
+    // TVK Flag Logo box (x: 42, y: 36, w: 135, h: 82)
     const logoImg = await loadImage('/media/tvk_official_logo.jpg');
     ctx.save();
-    roundRect(45, headerY, 120, 80, 12);
+    roundRect(42, headerY, 135, 82, 12);
     ctx.clip();
     if (logoImg) {
-      ctx.drawImage(logoImg, 45, headerY, 120, 80);
+      ctx.drawImage(logoImg, 42, headerY, 135, 82);
     } else {
       ctx.fillStyle = '#A00000';
-      ctx.fillRect(45, headerY, 120, 80);
+      ctx.fillRect(42, headerY, 135, 82);
     }
     ctx.restore();
 
     // Border around Logo Box
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#FDE68A';
-    roundRect(45, headerY, 120, 80, 12);
+    roundRect(42, headerY, 135, 82, 12);
     ctx.stroke();
 
     // TVK Title & Subtitle
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 42px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 40px system-ui, -apple-system, sans-serif';
     ctx.textBaseline = 'top';
-    ctx.fillText('TVK UTTAR PRADESH', 185, headerY + 6);
+    ctx.fillText('TVK UTTAR PRADESH', 195, headerY + 4);
 
     ctx.fillStyle = '#FCD34D';
-    ctx.font = '800 24px system-ui, -apple-system, sans-serif';
-    ctx.fillText(labels.subtitle, 185, headerY + 54);
+    ctx.font = '800 22px system-ui, -apple-system, sans-serif';
+    ctx.fillText(labels.subtitle, 195, headerY + 50);
 
-    // Right Shield Check Badge
-    const emblemX = W - 90;
-    const emblemY = headerY + 40;
+    // Right Shield Check Emblem
+    const emblemX = W - 78;
+    const emblemY = headerY + 41;
     ctx.save();
     ctx.beginPath();
-    ctx.arc(emblemX, emblemY, 34, 0, Math.PI * 2);
-    const emblemGrad = ctx.createLinearGradient(emblemX - 34, emblemY - 34, emblemX + 34, emblemY + 34);
+    ctx.arc(emblemX, emblemY, 32, 0, Math.PI * 2);
+    const emblemGrad = ctx.createLinearGradient(emblemX - 32, emblemY - 32, emblemX + 32, emblemY + 32);
     emblemGrad.addColorStop(0, '#FDE68A');
     emblemGrad.addColorStop(0.5, '#F59E0B');
     emblemGrad.addColorStop(1, '#D97706');
@@ -324,47 +343,47 @@ export default function RealisticMemberCard({
 
     // Inner dark circle
     ctx.beginPath();
-    ctx.arc(emblemX, emblemY, 28, 0, Math.PI * 2);
+    ctx.arc(emblemX, emblemY, 26, 0, Math.PI * 2);
     ctx.fillStyle = '#020617';
     ctx.fill();
 
     // Shield check icon
     ctx.fillStyle = '#FBBF24';
     ctx.beginPath();
-    ctx.moveTo(emblemX, emblemY - 14);
-    ctx.lineTo(emblemX + 14, emblemY - 6);
-    ctx.lineTo(emblemX + 14, emblemY + 8);
-    ctx.quadraticCurveTo(emblemX, emblemY + 20, emblemX, emblemY + 20);
-    ctx.quadraticCurveTo(emblemX, emblemY + 20, emblemX - 14, emblemY + 8);
-    ctx.lineTo(emblemX - 14, emblemY - 6);
+    ctx.moveTo(emblemX, emblemY - 13);
+    ctx.lineTo(emblemX + 13, emblemY - 5);
+    ctx.lineTo(emblemX + 13, emblemY + 7);
+    ctx.quadraticCurveTo(emblemX, emblemY + 18, emblemX, emblemY + 18);
+    ctx.quadraticCurveTo(emblemX, emblemY + 18, emblemX - 13, emblemY + 7);
+    ctx.lineTo(emblemX - 13, emblemY - 5);
     ctx.closePath();
     ctx.fill();
 
     ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(emblemX - 6, emblemY + 3);
-    ctx.lineTo(emblemX - 1, emblemY + 8);
-    ctx.lineTo(emblemX + 7, emblemY - 2);
+    ctx.moveTo(emblemX - 5, emblemY + 2);
+    ctx.lineTo(emblemX - 1, emblemY + 7);
+    ctx.lineTo(emblemX + 6, emblemY - 2);
     ctx.stroke();
     ctx.restore();
 
     // Header bottom gold divider
     ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(45, 140);
-    ctx.lineTo(W - 45, 140);
+    ctx.moveTo(42, 138);
+    ctx.lineTo(W - 42, 138);
     ctx.stroke();
 
     // ============================================================
-    // MIDDLE BODY
+    // MIDDLE BODY (y: 155 -> 740)
     // ============================================================
-    // 1. Passport Photo Frame (x: 45, y: 170, w: 340, h: 425)
-    const photoX = 45;
-    const photoY = 170;
-    const photoW = 340;
-    const photoH = 425;
+    // 1. Passport Photo Frame (x: 42, y: 165, w: 350, h: 438)
+    const photoX = 42;
+    const photoY = 165;
+    const photoW = 350;
+    const photoH = 438;
 
     ctx.save();
     roundRect(photoX, photoY, photoW, photoH, 24);
@@ -405,10 +424,10 @@ export default function RealisticMemberCard({
     const detailX = 425;
     let textY = 175;
 
-    // Member ID Badge
+    // Member ID Badge (Pill shape)
     ctx.save();
     const badgeW = 440;
-    const badgeH = 50;
+    const badgeH = 52;
     roundRect(detailX, textY, badgeW, badgeH, 12);
     ctx.fillStyle = '#FBBF24';
     ctx.fill();
@@ -417,12 +436,12 @@ export default function RealisticMemberCard({
     ctx.stroke();
 
     ctx.fillStyle = '#020617';
-    ctx.font = '900 24px monospace, system-ui';
+    ctx.font = '900 25px monospace, system-ui';
     ctx.textBaseline = 'middle';
     ctx.fillText(`MEMBER ID:  ${membershipNumber}`, detailX + 18, textY + badgeH / 2);
     ctx.restore();
 
-    textY += 75;
+    textY += 76;
 
     // Name Section
     ctx.fillStyle = '#FCD34D';
@@ -430,12 +449,12 @@ export default function RealisticMemberCard({
     ctx.textBaseline = 'top';
     ctx.fillText(labels.nameLabel, detailX, textY);
 
-    textY += 32;
+    textY += 34;
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 44px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 48px system-ui, -apple-system, sans-serif';
     ctx.fillText(fullName, detailX, textY);
 
-    textY += 68;
+    textY += 72;
 
     // Age & DOB
     ctx.fillStyle = '#E2E8F0';
@@ -452,7 +471,7 @@ export default function RealisticMemberCard({
     ctx.font = '600 24px monospace, system-ui';
     ctx.fillText(` (${labels.dobLabel}: ${displayDob})`, detailX + ageLabelWidth + ageValWidth, textY);
 
-    textY += 46;
+    textY += 48;
 
     // District & State
     ctx.fillStyle = '#FDE68A';
@@ -464,7 +483,7 @@ export default function RealisticMemberCard({
     ctx.font = '800 26px system-ui, -apple-system, sans-serif';
     ctx.fillText(`${cityName}, ${stateName || 'UP'}`, detailX + distLabelWidth, textY);
 
-    textY += 50;
+    textY += 52;
 
     // Issue Date (Emerald Badge)
     ctx.fillStyle = '#34D399';
@@ -472,34 +491,40 @@ export default function RealisticMemberCard({
     ctx.fillText(`${labels.issueLabel}: ${joinedAt}`, detailX, textY);
 
     // ============================================================
-    // FOOTER SLOGAN BANNER
+    // FOOTER SLOGAN BANNER (Pinned to the exact bottom of the card)
     // ============================================================
-    const footerY = 635;
-    const footerH = 120;
+    const footerH = 155;
+    const footerY = H - footerH;
 
-    // Footer top divider
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
-    ctx.lineWidth = 3;
+    // Footer Background (Extends all the way to bottom edge H)
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.75)';
+    ctx.fillRect(0, footerY, W, footerH);
+
+    // Footer top gold divider
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.50)';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(0, footerY);
     ctx.lineTo(W, footerY);
     ctx.stroke();
 
-    // Footer Background
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
-    ctx.fillRect(0, footerY, W, footerH);
-
     // Tamil Slogan
     ctx.fillStyle = '#FFC72C';
-    ctx.font = '900 32px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 34px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(labels.sloganTamil, W / 2, footerY + 18);
+    ctx.fillText(labels.sloganTamil, W / 2, footerY + 28);
 
     // Translated Slogan
     ctx.fillStyle = '#FDE68A';
-    ctx.font = '700 22px system-ui, -apple-system, sans-serif';
-    ctx.fillText(labels.sloganTranslated, W / 2, footerY + 66);
+    ctx.font = '700 23px system-ui, -apple-system, sans-serif';
+    ctx.fillText(labels.sloganTranslated, W / 2, footerY + 82);
+
+    // 4. Outer Gold Border (Drawn on top of all layers for crisp perimeter)
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#FBBF24';
+    roundRect(5, 5, W - 10, H - 10, 40);
+    ctx.stroke();
 
     return canvas;
   };
