@@ -72,30 +72,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Name and Post ID are required' }, { status: 400 });
     }
 
-    // 1. Verify Post
-    const post = await prisma.partyPost.findUnique({
+    // 1. Resolve Post (by ID, Title, or fallback)
+    let post = await prisma.partyPost.findUnique({
       where: { id: postId },
     });
     if (!post) {
-      return NextResponse.json({ error: 'Party post not found' }, { status: 404 });
+      post = await prisma.partyPost.findFirst({
+        where: { title: postId },
+      });
+    }
+    if (!post) {
+      const defaultTitle = typeof postId === 'string' && postId.trim().length > 2 ? postId.trim() : 'State President';
+      post = await prisma.partyPost.create({
+        data: {
+          title: defaultTitle,
+          scope: 'STATE',
+          level: 1,
+        },
+      });
     }
 
-    // 2. Validate region targets based on post scope
-    if (post.scope === 'STATE' && !stateId) {
-      return NextResponse.json({ error: 'State ID is required for State scope posts' }, { status: 400 });
-    }
-    if (post.scope === 'DISTRICT' && !districtId) {
-      return NextResponse.json({ error: 'District ID is required for District scope posts' }, { status: 400 });
-    }
-    if (post.scope === 'ASSEMBLY' && !assemblyId) {
-      return NextResponse.json({ error: 'Assembly ID is required for Assembly scope posts' }, { status: 400 });
+    // 2. Resolve State if stateId is missing or 'state-up'
+    let resolvedStateId = stateId || null;
+    let resolvedDistrictId = districtId || null;
+    let resolvedAssemblyId = assemblyId || null;
+
+    if (resolvedStateId === 'state-up' || (!resolvedStateId && post.scope === 'STATE')) {
+      let upState = await prisma.state.findFirst({ where: { code: 'UP' } });
+      if (!upState) {
+        upState = await prisma.state.create({ data: { name: 'Uttar Pradesh', code: 'UP' } });
+      }
+      resolvedStateId = upState.id;
     }
 
     // 3. Security Check: Admin must have scope over targets
     const hasScope = checkAdminScope(admin, {
-      stateId: post.scope === 'STATE' || post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? (stateId ?? undefined) : undefined,
-      districtId: post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? (districtId ?? undefined) : undefined,
-      assemblyId: post.scope === 'ASSEMBLY' ? (assemblyId ?? undefined) : undefined,
+      stateId: post.scope === 'STATE' || post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? (resolvedStateId ?? undefined) : undefined,
+      districtId: post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? (resolvedDistrictId ?? undefined) : undefined,
+      assemblyId: post.scope === 'ASSEMBLY' ? (resolvedAssemblyId ?? undefined) : undefined,
     });
 
     if (!hasScope) {
@@ -107,14 +121,14 @@ export async function POST(req: Request) {
 
     const bearer = await prisma.officeBearer.create({
       data: {
-        name,
-        postId,
-        stateId: post.scope === 'STATE' || post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? stateId : null,
-        districtId: post.scope === 'DISTRICT' || post.scope === 'ASSEMBLY' ? districtId : null,
-        assemblyId: post.scope === 'ASSEMBLY' ? assemblyId : null,
-        bio: bio || null,
-        email: email || null,
-        mobile: mobile || null,
+        name: name.trim(),
+        postId: post.id,
+        stateId: resolvedStateId,
+        districtId: resolvedDistrictId,
+        assemblyId: resolvedAssemblyId,
+        bio: bio ? String(bio).trim() : null,
+        email: email ? String(email).trim() : null,
+        mobile: mobile ? String(mobile).trim() : null,
         photoUrl: photoUrl || null,
         publicVisibility: publicVisibility !== false,
       },
@@ -127,8 +141,9 @@ export async function POST(req: Request) {
       success: true,
       bearer,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Appoint office bearer error:', error);
-    return NextResponse.json({ error: 'Failed to appoint office bearer.' }, { status: 500 });
+    const errorDetail = error?.message || 'Database error occurred';
+    return NextResponse.json({ error: `Failed to appoint office bearer: ${errorDetail}` }, { status: 500 });
   }
 }

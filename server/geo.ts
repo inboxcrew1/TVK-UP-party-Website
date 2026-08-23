@@ -7,6 +7,14 @@ const STATIC_UP_STATE = [
 
 export async function getStates() {
   try {
+    let state = await prisma.state.findFirst({
+      where: { code: 'UP' }
+    });
+    if (!state) {
+      state = await prisma.state.create({
+        data: { name: 'Uttar Pradesh', code: 'UP' }
+      });
+    }
     const states = await prisma.state.findMany({
       orderBy: { name: 'asc' },
     });
