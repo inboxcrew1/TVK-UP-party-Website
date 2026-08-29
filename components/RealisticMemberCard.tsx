@@ -314,11 +314,11 @@ export default function RealisticMemberCard({
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '900 44px system-ui, -apple-system, sans-serif';
     ctx.textBaseline = 'top';
-    ctx.fillText('TVK', 235, headerY + 2);
+    ctx.fillText('TVK', 235, headerY);
 
     ctx.fillStyle = '#FCD34D';
     ctx.font = '800 23px system-ui, -apple-system, sans-serif';
-    ctx.fillText('Tamilaga Vettri Kazhagam UP', 235, headerY + 50);
+    ctx.fillText('Tamilaga Vettri Kazhagam UP', 235, headerY + 56);
 
     // Right Shield Check Emblem
     const emblemX = W - 78;
@@ -503,12 +503,18 @@ export default function RealisticMemberCard({
     ctx.lineTo(W, footerY);
     ctx.stroke();
 
-    // Prominent Single-Language Slogan (Vertically & Horizontally Centered, Prominent Size)
+    // Prominent Single-Language Slogan (Horizontally Extended, Centered)
     ctx.fillStyle = '#FFC72C';
-    ctx.font = '900 38px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 46px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    try {
+      (ctx as any).letterSpacing = '3px';
+    } catch { /* fallback */ }
     ctx.fillText(labels.slogan, W / 2, footerY + (footerH / 2));
+    try {
+      (ctx as any).letterSpacing = '0px';
+    } catch { /* fallback */ }
 
     // 4. Outer Gold Border (Drawn on top of all layers for crisp perimeter)
     ctx.lineWidth = 10;
@@ -685,7 +691,7 @@ export default function RealisticMemberCard({
               <span className="font-black text-sm sm:text-base md:text-lg text-white tracking-tight leading-none block font-display">
                 TVK
               </span>
-              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-extrabold text-amber-300 uppercase tracking-wider block mt-0.5 whitespace-nowrap">
+              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-extrabold text-amber-300 uppercase tracking-wider block mt-1.5 sm:mt-2 whitespace-nowrap">
                 {labels.subtitle}
               </span>
             </div>
@@ -757,8 +763,8 @@ export default function RealisticMemberCard({
         </div>
 
         {/* FOOTER: PROMINENT SINGLE-LANGUAGE SLOGAN BANNER */}
-        <div className="relative z-10 border-t border-amber-400/50 text-center bg-slate-950/75 rounded-b-xl -mx-3.5 sm:-mx-4 md:-mx-5 -mb-3.5 sm:-mb-4 md:-mb-5 py-2 sm:py-2.5 px-3 flex items-center justify-center min-h-[34px] sm:min-h-[38px]">
-          <p className="text-xs sm:text-[13px] md:text-sm font-black uppercase text-[#FFC72C] font-display tracking-wider drop-shadow leading-snug">
+        <div className="relative z-10 border-t border-amber-400/50 text-center bg-slate-950/75 rounded-b-xl -mx-3.5 sm:-mx-4 md:-mx-5 -mb-3.5 sm:-mb-4 md:-mb-5 py-2 sm:py-2.5 px-4 sm:px-6 flex items-center justify-center min-h-[36px] sm:min-h-[40px]">
+          <p className="text-[12.5px] sm:text-[14.5px] md:text-[16px] font-black uppercase text-[#FFC72C] font-display tracking-[0.06em] sm:tracking-[0.10em] md:tracking-[0.14em] drop-shadow-md leading-snug whitespace-nowrap overflow-hidden text-ellipsis">
             {labels.slogan}
           </p>
         </div>
