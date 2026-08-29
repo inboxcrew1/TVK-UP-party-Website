@@ -6,30 +6,26 @@ import { prisma } from '../../../../lib/prisma';
 export const dynamic = 'force-dynamic';
 
 async function ensureOfficeBearerTable() {
-  try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "OfficeBearer" (
-        "id" TEXT NOT NULL,
-        "name" TEXT NOT NULL,
-        "photoUrl" TEXT,
-        "postId" TEXT NOT NULL,
-        "stateId" TEXT,
-        "districtId" TEXT,
-        "assemblyId" TEXT,
-        "appointmentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-        "publicVisibility" BOOLEAN NOT NULL DEFAULT true,
-        "bio" TEXT,
-        "email" TEXT,
-        "mobile" TEXT,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT "OfficeBearer_pkey" PRIMARY KEY ("id")
-      );
-    `);
-  } catch (err) {
-    console.error('ensureOfficeBearerTable error:', err);
-  }
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "OfficeBearer" (
+      "id" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "photoUrl" TEXT,
+      "postId" TEXT NOT NULL,
+      "stateId" TEXT,
+      "districtId" TEXT,
+      "assemblyId" TEXT,
+      "appointmentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+      "publicVisibility" BOOLEAN NOT NULL DEFAULT true,
+      "bio" TEXT,
+      "email" TEXT,
+      "mobile" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "OfficeBearer_pkey" PRIMARY KEY ("id")
+    );
+  `);
 }
 
 export async function GET(req: Request) {
@@ -70,9 +66,9 @@ export async function GET(req: Request) {
       success: true,
       bearers,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Fetch office bearers error:', error);
-    return NextResponse.json({ error: 'Failed to retrieve office bearers.' }, { status: 500 });
+    return NextResponse.json({ error: `Failed to retrieve office bearers: ${error?.message || String(error)}` }, { status: 500 });
   }
 }
 
