@@ -53,10 +53,11 @@ export default function RealisticMemberCard({
 
   // Bilingual Field Label Mapper for All 7 Languages
   const getBilingualLabels = (l: LanguageCode) => {
+    const subtitle = 'Tamilaga Vettri Kazhagam UP';
     switch (l) {
       case 'HI':
         return {
-          subtitle: 'तमिलग वेत्रि कषगम • उत्तर प्रदेश (TVK UP)',
+          subtitle,
           idLabel: 'सदस्यता क्रमांक (MEMBER ID)',
           nameLabel: 'नाम (NAME)',
           stateLabel: 'राज्य (STATE)',
@@ -65,12 +66,11 @@ export default function RealisticMemberCard({
           dobLabel: 'जन्मतिथि (DOB)',
           issueLabel: 'जारी (ISSUE)',
           validityLabel: 'आजीवन (LIFETIME)',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'जन्म से सभी जीव समान हैं',
+          slogan: '"जन्म से सभी जीव समान हैं"',
         };
       case 'TA':
         return {
-          subtitle: 'தமிழக வெற்றிக் கழகம் • TVK UP',
+          subtitle,
           idLabel: 'உறுப்பினர் எண் (MEMBER ID)',
           nameLabel: 'பெயர் (NAME)',
           stateLabel: 'மாநிலம் (STATE)',
@@ -79,12 +79,11 @@ export default function RealisticMemberCard({
           dobLabel: 'பிறந்த தேதி (DOB)',
           issueLabel: 'தேதி (ISSUE)',
           validityLabel: 'ஆயுட்காலம் (LIFETIME)',
-          sloganTamil: '"பிறப்பொக்கும் எல்லா உயிர்க்கும்"',
-          sloganTranslated: 'All Human Beings Are Born Equal',
+          slogan: '"பிறப்பொக்கும் எல்லா உயிர்க்கும்"',
         };
       case 'TE':
         return {
-          subtitle: 'తమిళగ వెట్రి కజగం • TVK UP',
+          subtitle,
           idLabel: 'సభ్యత్వ సంఖ్య (MEMBER ID)',
           nameLabel: 'పేరు (NAME)',
           stateLabel: 'రాష్ట్రం (STATE)',
@@ -93,12 +92,11 @@ export default function RealisticMemberCard({
           dobLabel: 'పుట్టిన తేదీ (DOB)',
           issueLabel: 'తేదీ (ISSUE)',
           validityLabel: 'జీవితకాలం (LIFETIME)',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'జన్మతః మానవులందరూ సమానమే',
+          slogan: '"జన్మతః మానవులందరూ సమానమే"',
         };
       case 'KN':
         return {
-          subtitle: 'ತಮಿಳಗ ವೆಟ್ರಿ ಕಳಗಂ • TVK UP',
+          subtitle,
           idLabel: 'ಸದಸ್ಯತ್ವ ಸಂಖ್ಯೆ (MEMBER ID)',
           nameLabel: 'ಹೆಸರು (NAME)',
           stateLabel: 'ರಾಜ್ಯ (STATE)',
@@ -107,12 +105,11 @@ export default function RealisticMemberCard({
           dobLabel: 'ಹುಟ್ಟಿದ ದಿನಾಂಕ (DOB)',
           issueLabel: 'ದಿನಾಂಕ (ISSUE)',
           validityLabel: 'ಆಜೀವ (LIFETIME)',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'ಹುಟ್ಟಿನಿಂದ ಎಲ್ಲಾ ಮಾನವರೂ ಸಮಾನರು',
+          slogan: '"ಹುಟ್ಟಿನಿಂದ ಎಲ್ಲಾ ಮಾನವರೂ ಸಮಾನರು"',
         };
       case 'ML':
         return {
-          subtitle: 'തമിഴക വെട്രി കഴകം • TVK UP',
+          subtitle,
           idLabel: 'അംഗത്വ നമ്പർ (MEMBER ID)',
           nameLabel: 'പേര് (NAME)',
           stateLabel: 'സംസ്ഥാനം (STATE)',
@@ -121,12 +118,11 @@ export default function RealisticMemberCard({
           dobLabel: 'ജനന തീയതി (DOB)',
           issueLabel: 'തീയതി (ISSUE)',
           validityLabel: 'ആയുഷ്കാലം (LIFETIME)',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'ജനനത്താൽ എല്ലാ മനുഷ്യരും സമന്മാർ',
+          slogan: '"ജനനത്താൽ എല്ലാ മനുഷ്യരും സമന്മാർ"',
         };
       case 'MR':
         return {
-          subtitle: 'तमिळग वेत्री कळघम • TVK UP',
+          subtitle,
           idLabel: 'सदस्यत्व क्रमांक (MEMBER ID)',
           nameLabel: 'नाव (NAME)',
           stateLabel: 'राज्य (STATE)',
@@ -135,12 +131,12 @@ export default function RealisticMemberCard({
           dobLabel: 'जन्मतारीख (DOB)',
           issueLabel: 'दिनांक (ISSUE)',
           validityLabel: 'आजीवन (LIFETIME)',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'जन्माने सर्व मानव समान आहेत',
+          slogan: '"जन्माने सर्व मानव समान आहेत"',
         };
+      case 'EN':
       default:
         return {
-          subtitle: 'TAMILAGA VETTRI KAZHAGAM • TVK UP',
+          subtitle,
           idLabel: 'MEMBER ID / सदस्यता क्रमांक',
           nameLabel: 'NAME / नाम',
           stateLabel: 'STATE / राज्य',
@@ -149,8 +145,7 @@ export default function RealisticMemberCard({
           dobLabel: 'DOB',
           issueLabel: 'ISSUE',
           validityLabel: 'VALIDITY: LIFETIME',
-          sloganTamil: '"Pirappokkum Ella Uyirkkum"',
-          sloganTranslated: 'All Human Beings Are Born Equal',
+          slogan: '"All Human Beings Are Born Equal"',
         };
     }
   };
@@ -296,34 +291,34 @@ export default function RealisticMemberCard({
     // ============================================================
     const headerY = 36;
 
-    // TVK Flag Logo box (x: 42, y: 36, w: 135, h: 82)
+    // TVK Flag Logo box (Expanded Horizontal Landscape Area: x: 42, y: 36, w: 175, h: 78)
     const logoImg = await loadImage('/media/tvk_official_logo.jpg');
     ctx.save();
-    roundRect(42, headerY, 135, 82, 12);
+    roundRect(42, headerY, 175, 78, 12);
     ctx.clip();
     if (logoImg) {
-      ctx.drawImage(logoImg, 42, headerY, 135, 82);
+      ctx.drawImage(logoImg, 42, headerY, 175, 78);
     } else {
       ctx.fillStyle = '#A00000';
-      ctx.fillRect(42, headerY, 135, 82);
+      ctx.fillRect(42, headerY, 175, 78);
     }
     ctx.restore();
 
     // Border around Logo Box
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#FDE68A';
-    roundRect(42, headerY, 135, 82, 12);
+    roundRect(42, headerY, 175, 78, 12);
     ctx.stroke();
 
-    // TVK Title & Subtitle
+    // TVK Title (ONLY "TVK", "UTTAR PRADESH" removed) & Subtitle ("Tamilaga Vettri Kazhagam UP")
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 40px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 44px system-ui, -apple-system, sans-serif';
     ctx.textBaseline = 'top';
-    ctx.fillText('TVK UTTAR PRADESH', 195, headerY + 4);
+    ctx.fillText('TVK', 235, headerY + 2);
 
     ctx.fillStyle = '#FCD34D';
-    ctx.font = '800 22px system-ui, -apple-system, sans-serif';
-    ctx.fillText(labels.subtitle, 195, headerY + 50);
+    ctx.font = '800 23px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Tamilaga Vettri Kazhagam UP', 235, headerY + 50);
 
     // Right Shield Check Emblem
     const emblemX = W - 78;
@@ -508,17 +503,12 @@ export default function RealisticMemberCard({
     ctx.lineTo(W, footerY);
     ctx.stroke();
 
-    // Tamil Slogan
+    // Prominent Single-Language Slogan (Vertically & Horizontally Centered, Prominent Size)
     ctx.fillStyle = '#FFC72C';
-    ctx.font = '900 34px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 38px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(labels.sloganTamil, W / 2, footerY + 28);
-
-    // Translated Slogan
-    ctx.fillStyle = '#FDE68A';
-    ctx.font = '700 23px system-ui, -apple-system, sans-serif';
-    ctx.fillText(labels.sloganTranslated, W / 2, footerY + 82);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(labels.slogan, W / 2, footerY + (footerH / 2));
 
     // 4. Outer Gold Border (Drawn on top of all layers for crisp perimeter)
     ctx.lineWidth = 10;
@@ -680,11 +670,11 @@ export default function RealisticMemberCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-amber-400/15 via-red-900/10 to-transparent pointer-events-none" />
         <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-        {/* TOP HEADER: OFFICIAL TVK UTTAR PRADESH NAME & FLAG LOGO */}
+        {/* TOP HEADER: OFFICIAL TVK NAME & FLAG LOGO */}
         <div className="relative z-10 flex items-center justify-between border-b border-amber-400/40 pb-2">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Official TVK Flag Logo */}
-            <div className="w-10 sm:w-12 h-6 sm:h-7 rounded border-2 border-amber-300 shadow-md overflow-hidden shrink-0 bg-slate-950 flex items-center justify-center">
+            {/* Official TVK Flag Logo - Expanded Horizontal Landscape */}
+            <div className="w-14 sm:w-16 md:w-20 h-6 sm:h-7 md:h-8 rounded border-2 border-amber-300 shadow-md overflow-hidden shrink-0 bg-slate-950 flex items-center justify-center">
               <img loading="eager" decoding="sync" src="/media/tvk_official_logo.jpg"
                 alt="Official TVK Flag Logo"
                 className="w-full h-full object-cover"
@@ -692,10 +682,10 @@ export default function RealisticMemberCard({
             </div>
 
             <div>
-              <span className="font-black text-xs sm:text-sm text-white tracking-tight leading-none block font-display">
-                TVK UTTAR PRADESH
+              <span className="font-black text-sm sm:text-base md:text-lg text-white tracking-tight leading-none block font-display">
+                TVK
               </span>
-              <span className="text-[8px] sm:text-[9px] font-extrabold text-amber-300 uppercase tracking-wider block mt-0.5">
+              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-extrabold text-amber-300 uppercase tracking-wider block mt-0.5 whitespace-nowrap">
                 {labels.subtitle}
               </span>
             </div>
@@ -766,13 +756,10 @@ export default function RealisticMemberCard({
           />
         </div>
 
-        {/* FOOTER: DYNAMIC TRANSLATED SLOGAN BANNER */}
-        <div className="relative z-10 border-t border-amber-400/50 pt-1 text-center bg-slate-950/60 rounded-b-xl -mx-3.5 sm:-mx-4 md:-mx-5 -mb-3.5 sm:-mb-4 md:-mb-5 p-1.5 sm:p-2">
-          <p className="text-[10px] sm:text-[11px] font-black uppercase text-[#FFC72C] font-display tracking-wider drop-shadow">
-            {labels.sloganTamil}
-          </p>
-          <p className="text-[7.5px] sm:text-[8px] text-amber-200 font-semibold tracking-wide">
-            {labels.sloganTranslated}
+        {/* FOOTER: PROMINENT SINGLE-LANGUAGE SLOGAN BANNER */}
+        <div className="relative z-10 border-t border-amber-400/50 text-center bg-slate-950/75 rounded-b-xl -mx-3.5 sm:-mx-4 md:-mx-5 -mb-3.5 sm:-mb-4 md:-mb-5 py-2 sm:py-2.5 px-3 flex items-center justify-center min-h-[34px] sm:min-h-[38px]">
+          <p className="text-xs sm:text-[13px] md:text-sm font-black uppercase text-[#FFC72C] font-display tracking-wider drop-shadow leading-snug">
+            {labels.slogan}
           </p>
         </div>
       </div>
