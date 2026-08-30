@@ -31,11 +31,12 @@ function getSmtpTransport() {
 
   // Check if Gmail app password is provided
   if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    const cleanPassword = process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '');
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+        user: process.env.GMAIL_USER.trim(),
+        pass: cleanPassword,
       },
     });
   }
@@ -141,7 +142,13 @@ function generateOtpEmailHtml(otp: string, toEmail: string): string {
  * Sends the 6-digit OTP directly to tvkuttarpradesh@gmail.com
  */
 export async function sendAdminOtpEmail(toEmail: string, otp: string): Promise<SendEmailResult> {
-  const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM || '"TVK UP Security" <no-reply@tvkup.org>';
+  let fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM;
+  if (!fromAddress && process.env.GMAIL_USER) {
+    fromAddress = `"TVK UP Security" <${process.env.GMAIL_USER.trim()}>`;
+  }
+  if (!fromAddress) {
+    fromAddress = '"TVK UP Security" <no-reply@tvkup.org>';
+  }
   const subject = `[TVK-UP] Admin Login Verification Code: ${otp.slice(0, 3)} ${otp.slice(3)}`;
   const html = generateOtpEmailHtml(otp, toEmail);
 
