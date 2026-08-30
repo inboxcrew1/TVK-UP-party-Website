@@ -138,13 +138,12 @@ export async function POST(req: Request) {
     }
 
     // Also check permanent historical sequence tracker so deleted IDs are NEVER reused
+    let seqRecord: any = null;
     try {
-      const seqRecord = await prisma.membershipCount.findUnique({
+      seqRecord = await prisma.membershipCount.findFirst({
         where: {
-          scopeType_scopeId: {
-            scopeType: 'SEQUENCE',
-            scopeId: 'TVK-UP',
-          },
+          scopeType: 'SEQUENCE',
+          scopeId: 'TVK-UP',
         },
       });
       if (seqRecord && seqRecord.activeCount > maxSeq) {
@@ -179,22 +178,20 @@ export async function POST(req: Request) {
 
         // Permanently record high-water mark sequence in database so deleted IDs are never reused
         try {
-          await prisma.membershipCount.upsert({
-            where: {
-              scopeType_scopeId: {
+          if (seqRecord && seqRecord.id) {
+            await prisma.membershipCount.update({
+              where: { id: seqRecord.id },
+              data: { activeCount: Math.max(seqRecord.activeCount, nextSeqNumber) },
+            });
+          } else {
+            await prisma.membershipCount.create({
+              data: {
                 scopeType: 'SEQUENCE',
                 scopeId: 'TVK-UP',
+                activeCount: nextSeqNumber,
               },
-            },
-            update: {
-              activeCount: nextSeqNumber,
-            },
-            create: {
-              scopeType: 'SEQUENCE',
-              scopeId: 'TVK-UP',
-              activeCount: nextSeqNumber,
-            },
-          });
+            });
+          }
         } catch (seqUpsertErr) {
           console.warn('Sequence tracker upsert error:', seqUpsertErr);
         }

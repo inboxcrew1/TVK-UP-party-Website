@@ -233,6 +233,36 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden: Member falls outside your scope.' }, { status: 403 });
     }
 
+    // Preserve sequence high-water mark so deleted Membership ID is NEVER reused by future registrations
+    if (member.membershipId) {
+      const seqNum = parseInt(member.membershipId.replace(/\D/g, ''), 10);
+      if (!isNaN(seqNum)) {
+        try {
+          const seqRecord = await prisma.membershipCount.findFirst({
+            where: { scopeType: 'SEQUENCE', scopeId: 'TVK-UP' },
+          });
+          if (seqRecord) {
+            if (seqNum > seqRecord.activeCount) {
+              await prisma.membershipCount.update({
+                where: { id: seqRecord.id },
+                data: { activeCount: seqNum },
+              });
+            }
+          } else {
+            await prisma.membershipCount.create({
+              data: {
+                scopeType: 'SEQUENCE',
+                scopeId: 'TVK-UP',
+                activeCount: seqNum,
+              },
+            });
+          }
+        } catch (seqSaveErr) {
+          console.warn('Sequence mark save error on delete:', seqSaveErr);
+        }
+      }
+    }
+
     // Safely delete optional child records if present in database
     try { await prisma.memberDocument.deleteMany({ where: { memberId: id } }); } catch (e) {}
     try { await prisma.memberAddress.deleteMany({ where: { memberId: id } }); } catch (e) {}

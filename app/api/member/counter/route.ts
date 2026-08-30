@@ -58,12 +58,10 @@ export async function GET(req: Request) {
     }
 
     try {
-      const seqRecord = await prisma.membershipCount.findUnique({
+      const seqRecord = await prisma.membershipCount.findFirst({
         where: {
-          scopeType_scopeId: {
-            scopeType: 'SEQUENCE',
-            scopeId: 'TVK-UP',
-          },
+          scopeType: 'SEQUENCE',
+          scopeId: 'TVK-UP',
         },
       });
       if (seqRecord && seqRecord.activeCount > maxSeq) {
