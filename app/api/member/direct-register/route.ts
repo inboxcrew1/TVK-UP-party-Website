@@ -142,33 +142,58 @@ export async function POST(req: Request) {
     let formattedId = `TVK-UP ${nextSeqNumber}`;
     let isExisting = false;
 
-    try {
-      member = await prisma.member.create({
-        data: {
-          membershipId: formattedId,
-          fullName: name.trim(),
-          mobile: cleanPhone,
-          email: email ? email.trim() : undefined,
-          gender: gender || 'Male',
-          dob: dob ? new Date(dob) : new Date(1998, 0, 1),
-          photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
-          stateId: stateObj.id,
-          districtId: distObj.id,
-          assemblyId: assObj.id,
-          status: 'ACTIVE',
-        },
-      });
-    } catch (createErr: any) {
-      console.error('Member create failed:', createErr);
-      return NextResponse.json({
-        error: `Member create failed: ${createErr?.message || String(createErr)}`,
-        code: createErr?.code,
-        meta: createErr?.meta,
-        stateId: stateObj?.id,
-        districtId: distObj?.id,
-        assemblyId: assObj?.id,
-        formattedId,
-      }, { status: 500 });
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        member = await prisma.member.create({
+          data: {
+            membershipId: formattedId,
+            fullName: name.trim(),
+            mobile: cleanPhone,
+            email: email ? email.trim() : undefined,
+            gender: gender || 'Male',
+            dob: dob ? new Date(dob) : new Date(1998, 0, 1),
+            photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
+            stateId: stateObj.id,
+            districtId: distObj.id,
+            assemblyId: assObj.id,
+            status: 'ACTIVE',
+          },
+        });
+        break;
+      } catch (createErr: any) {
+        if (createErr?.code === 'P2002') {
+          const target = createErr?.meta?.target;
+          const targetStr = Array.isArray(target) ? target.join(',') : String(target || '');
+          const msg = String(createErr?.message || '');
+
+          // Check if collision was on mobile
+          if (targetStr.includes('mobile') || msg.includes('mobile')) {
+            const existingForMobile = await prisma.member.findFirst({
+              where: { mobile: cleanPhone },
+            });
+            return NextResponse.json(
+              {
+                error: `यह मोबाइल नंबर पहले से पंजीकृत है (सदस्यता ID: ${existingForMobile?.membershipId || 'अज्ञात'})। कृपया 'खोजें / डाउनलोड' टैब में अपना कार्ड देखें। (This mobile number is already registered with Membership ID: ${existingForMobile?.membershipId || 'N/A'}).`,
+                existingMembershipId: existingForMobile?.membershipId,
+              },
+              { status: 400 }
+            );
+          }
+
+          // Otherwise, it was a concurrent collision on membershipId -> increment and retry next ID
+          if (attempt < 4) {
+            nextSeqNumber += 1;
+            formattedId = `TVK-UP ${nextSeqNumber}`;
+            continue;
+          }
+        }
+
+        console.error('Member create failed:', createErr);
+        return NextResponse.json(
+          { error: `Registration error: ${createErr?.message || 'Database error'}` },
+          { status: 500 }
+        );
+      }
     }
 
     const activeCount = await prisma.member.count({ where: { status: 'ACTIVE' } });
