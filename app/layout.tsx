@@ -57,7 +57,7 @@ const jsonLdOrg = {
   },
   contactPoint: {
     '@type': 'ContactPoint',
-    telephone: '+91-5732-234567',
+    telephone: '+91-9762154127',
     contactType: 'Customer Service',
     areaServed: 'IN-UP',
     availableLanguage: ['Hindi', 'English', 'Tamil'],

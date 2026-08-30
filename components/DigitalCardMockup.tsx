@@ -121,7 +121,7 @@ export default function DigitalCardMockup() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-amber-400/40 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-12 h-7 rounded border border-amber-300 overflow-hidden shrink-0 bg-slate-950">
+                  <div className="w-12 aspect-[3/2] rounded border border-amber-300 overflow-hidden shrink-0 bg-slate-950 flex items-center justify-center">
                     <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg" alt="TVK Flag" className="w-full h-full object-cover" />
                   </div>
                   <div>

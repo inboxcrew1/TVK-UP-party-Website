@@ -624,19 +624,21 @@ export default function AdminDashboardPage() {
     ctx.fillStyle = '#F59E0B';
     ctx.fillRect(0, headerH - 6, W, 6);
 
-    // TVK Logo in Header
+    // TVK Flag Logo in Header (True 3:2 Proportions)
     const logoImg = await loadImage('/media/tvk_official_logo.jpg');
     if (logoImg) {
+      const logoW = 105;
+      const logoH = 70;
+      const logoX = 35;
+      const logoY = 45;
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(80, 80, 42, 0, Math.PI * 2);
+      roundRect(logoX, logoY, logoW, logoH, 8);
       ctx.clip();
-      ctx.drawImage(logoImg, 38, 38, 84, 84);
+      ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
       ctx.restore();
       ctx.strokeStyle = '#FCD34D';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(80, 80, 42, 0, Math.PI * 2);
+      ctx.lineWidth = 3;
+      roundRect(logoX, logoY, logoW, logoH, 8);
       ctx.stroke();
     }
 
@@ -753,7 +755,7 @@ export default function AdminDashboardPage() {
 
     ctx.fillStyle = '#0F172A';
     ctx.font = '800 24px monospace, system-ui';
-    ctx.fillText(selectedBearerCard.mobile || '+91 9876543210', boxX + boxW / 2 + 10, boxY + 242);
+    ctx.fillText(selectedBearerCard.mobile || '+91 9762154127', boxX + boxW / 2 + 10, boxY + 242);
 
     // 7. QR Verification & Signature Row
     const verifyY = boxY + boxH + 28;
@@ -2203,12 +2205,14 @@ export default function AdminDashboardPage() {
 
                 {/* 1. TOP HEADER BANNER */}
                 <div className="bg-gradient-to-r from-[#800000] via-[#A00000] to-[#800000] px-3 py-2.5 text-center border-b-2 border-amber-400 shrink-0 relative z-10 text-white">
-                  <div className="flex items-center justify-center gap-2">
-                    <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
-                      alt="TVK Logo"
-                      className="w-7 h-7 rounded-full border border-amber-300 shadow shrink-0"
-                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                    />
+                  <div className="flex items-center justify-center gap-2.5">
+                    <div className="w-10 aspect-[3/2] rounded overflow-hidden border border-amber-300 shadow shrink-0 bg-slate-950 flex items-center justify-center">
+                      <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
+                        alt="TVK Logo"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
+                    </div>
                     <div className="text-center">
                       <h4 className="text-white font-extrabold text-[12px] uppercase tracking-wider leading-tight drop-shadow font-display">
                         तमिलागा वेत्री कड़गम
@@ -2262,7 +2266,7 @@ export default function AdminDashboardPage() {
                       <div>
                         <span className="text-slate-600 text-[8px] uppercase block font-bold">Phone Number</span>
                         <span className="text-slate-900 font-extrabold text-[9.5px] block">
-                          {selectedBearerCard.mobile || '+91 9876543210'}
+                          {selectedBearerCard.mobile || '+91 9762154127'}
                         </span>
                       </div>
                     </div>

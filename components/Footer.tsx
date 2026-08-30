@@ -15,8 +15,8 @@ export default function Footer() {
       keyDistricts: 'प्रमुख जनपद उत्तर प्रदेश',
       contactUs: 'संपर्क एवं मुख्यालय',
       headquarters: 'टीवीके उत्तर प्रदेश राज्य मुख्यालय, बुलंदशहर (203001)',
-      helpline: 'हेल्पलाइन: +91 5732 234567 / +91 98765 43210',
-      email: 'ईमेल: contact@tvkuttarpradesh.in',
+      helpline: 'हेल्पलाइन: +91 9762154127',
+      email: 'ईमेल: contact@tvkup.com',
       joinBtn: 'टीवीके-यूपी प्राथमिक सदस्य बनें',
       rights: '© 2026 तमिलग वेत्रि कषगम (TVK) उत्तर प्रदेश। सर्वाधिकार सुरक्षित।',
       secularTag: 'धर्मनिरपेक्ष सामाजिक न्याय • समानता • जनसेवा',
@@ -28,8 +28,8 @@ export default function Footer() {
       keyDistricts: 'Key UP Districts',
       contactUs: 'Contact & Headquarters',
       headquarters: 'TVK Uttar Pradesh State HQ, Bulandshahr (203001)',
-      helpline: 'Helpline: +91 5732 234567 / +91 98765 43210',
-      email: 'Email: contact@tvkuttarpradesh.in',
+      helpline: 'Helpline: +91 9762154127',
+      email: 'Email: contact@tvkup.com',
       joinBtn: 'Join TVK-UP Primary Membership',
       rights: '© 2026 Tamilaga Vettri Kazhagam (TVK) Uttar Pradesh. All Rights Reserved.',
       secularTag: 'Secular Social Justice • Equality • Public Welfare',
@@ -41,8 +41,8 @@ export default function Footer() {
       keyDistricts: 'முக்கிய மாவட்டங்கள்',
       contactUs: 'தொடர்பு & தலைமை அலுவலகம்',
       headquarters: 'டிவிகே உத்தரப் பிரதேச மாநில தலைமை அலுவலகம், புலந்தசஹர் (203001)',
-      helpline: 'உதவி எண்: +91 5732 234567',
-      email: 'மின்னஞ்சல்: contact@tvkuttarpradesh.in',
+      helpline: 'உதவி எண்: +91 9762154127',
+      email: 'மின்னஞ்சல்: contact@tvkup.com',
       joinBtn: 'TVK-UP உறுப்பினராக சேருங்கள்',
       rights: '© 2026 தமிழக வெற்றிக் கழகம். அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.',
       secularTag: 'சமூக நீதி • சமத்துவம் • மக்கள் சேவை',
@@ -54,8 +54,8 @@ export default function Footer() {
       keyDistricts: 'ముఖ్యమైన జిల్లాలు',
       contactUs: 'సంప్రదించండి & ప్రధాన కార్యాలయం',
       headquarters: 'టీవీకే ఉత్తర ప్రదేశ్ రాష్ట్ర ప్రధాన కార్యాలయం, బులంద్‌షహర్ (203001)',
-      helpline: 'హెల్ప్‌లైన్: +91 5732 234567',
-      email: 'ఈమెయిల్: contact@tvkuttarpradesh.in',
+      helpline: 'హెల్ప్‌లైన్: +91 9762154127',
+      email: 'ఈమెయిల్: contact@tvkup.com',
       joinBtn: 'టీవీకే-యూపీ ప్రాథమిక సభ్యుడిగా చేరండి',
       rights: '© 2026 తమిళగ వెట్రి కజగం ఉత్తర ప్రదేశ్. సర్వహక్కులూ ప్రత్యేకించబడ్డాయి.',
       secularTag: 'సామాజిక న్యాయం • సమానత్వం • ప్రజాసేవ',
@@ -67,8 +67,8 @@ export default function Footer() {
       keyDistricts: 'ಪ್ರಮುಖ ಜಿಲ್ಲೆಗಳು',
       contactUs: 'ಸಂಪರ್ಕಿಸಿ ಮತ್ತು ಪ್ರಧಾನ ಕಚೇರಿ',
       headquarters: 'ಟಿವಿಕೆ ಉತ್ತರ ಪ್ರದೇಶ ರಾಜ್ಯ ಪ್ರಧಾನ ಕಚೇರಿ, ಬುಲಂದ್‌ಶಹರ್ (203001)',
-      helpline: 'ಹೆಲ್ಪ್‌ಲೈನ್: +91 5732 234567',
-      email: 'ಇಮೇಲ್: contact@tvkuttarpradesh.in',
+      helpline: 'ಹೆಲ್ಪ್‌ಲೈನ್: +91 9762154127',
+      email: 'ಇಮೇಲ್: contact@tvkup.com',
       joinBtn: 'ಟಿವಿಕೆ-ಯುಪಿ ಪ್ರಾಥಮಿಕ ಸದಸ್ಯರಾಗಿ',
       rights: '© 2026 ತಮಿಳಗ ವೆಟ್ರಿ ಕಳಗಂ ಉತ್ತರ ಪ್ರದೇಶ. ಸರ್ವಾಧಿಕಾರ ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ.',
       secularTag: 'ಸಾಮಾಜಿಕ ನ್ಯಾಯ • ಸಮಾನತೆ • ಜನಸೇವೆ',
@@ -80,8 +80,8 @@ export default function Footer() {
       keyDistricts: 'പ്രധാന ജില്ലകൾ',
       contactUs: 'ബന്ധപ്പെടുക & ആസ്ഥാനം',
       headquarters: 'ടിവികെ ഉത്തർപ്രദേശ് സംസ്ഥാന ആസ്ഥാനം, ബുലന്ദ്ഷഹർ (203001)',
-      helpline: 'ഹെൽപ്പ് ലൈൻ: +91 5732 234567',
-      email: 'ഇമെയിൽ: contact@tvkuttarpradesh.in',
+      helpline: 'ഹെൽപ്പ് ലൈൻ: +91 9762154127',
+      email: 'ഇമെയിൽ: contact@tvkup.com',
       joinBtn: 'ടിവികെ-യുപി പ്രാഥമിക അംഗമാകുക',
       rights: '© 2026 തമിഴക വെട്രി കഴകം ഉത്തർപ്രദേശ്. എല്ലാ അവകാശങ്ങളും നിക്ഷിപ്തം.',
       secularTag: 'സാമൂഹിക നീതി • സമത്വം • ജനസേവനം',
@@ -93,8 +93,8 @@ export default function Footer() {
       keyDistricts: 'प्रमुख जिल्हे उत्तर प्रदेश',
       contactUs: 'संपर्क आणि मुख्यालय',
       headquarters: 'टीव्हीके उत्तर प्रदेश राज्य मुख्यालय, बुलंदशहर (२०३००१)',
-      helpline: 'हेल्पलाइन: +91 5732 234567',
-      email: 'ईमेल: contact@tvkuttarpradesh.in',
+      helpline: 'हेल्पलाइन: +91 9762154127',
+      email: 'ईमेल: contact@tvkup.com',
       joinBtn: 'टीव्हीके-यूपी प्राथमिक सदस्य व्हा',
       rights: '© 2026 तमिळगा वेत्री कळघम उत्तर प्रदेश. सर्व हक्क सुरक्षित.',
       secularTag: 'धर्मनिरपेक्ष सामाजिक न्याय • समानता • जनसेवा',
@@ -135,10 +135,13 @@ export default function Footer() {
         {/* TOP BRANDING & MOTTO BANNER */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-b border-slate-800/80 pb-10">
           <div className="lg:col-span-7 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)] bg-slate-950 shrink-0 p-0.5">
-              <img loading="lazy" decoding="async" src="/media/tvk_official_logo.jpg"
-                alt="TVK Official Logo"
-                className="w-full h-full object-cover rounded-xl"
+            <div className="w-16 sm:w-20 md:w-22 aspect-[3/2] rounded-xl overflow-hidden border-2 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] bg-slate-950 shrink-0 p-0.5 flex items-center justify-center transition-transform hover:scale-105">
+              <img
+                loading="lazy"
+                decoding="async"
+                src="/media/tvk_official_logo.jpg"
+                alt="TVK Official Red-Yellow Elephant Flag Logo"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
 
@@ -234,11 +237,15 @@ export default function Footer() {
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{fs.helpline}</span>
+                <a href="tel:+919762154127" className="hover:text-emerald-300 transition-colors">
+                  {fs.helpline}
+                </a>
               </p>
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{fs.email}</span>
+                <a href="mailto:contact@tvkup.com" className="hover:text-amber-300 transition-colors">
+                  {fs.email}
+                </a>
               </p>
             </div>
           </div>
