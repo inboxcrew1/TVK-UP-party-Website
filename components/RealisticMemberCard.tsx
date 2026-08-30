@@ -49,7 +49,46 @@ export default function RealisticMemberCard({
   const [isDownloadingJpg, setIsDownloadingJpg] = useState(false);
 
   const cityName = city || districtName || 'Lucknow';
-  const displayDob = dob || (age ? `15/08/${2026 - parseInt(age || '25', 10)}` : '15/08/1994');
+
+  const formatDobDisplay = (val?: string): string => {
+    if (!val) return '';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) return val;
+    const isoMatch = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const [, y, m, d] = isoMatch;
+      return `${d}/${m}/${y}`;
+    }
+    const parsed = new Date(val);
+    if (!isNaN(parsed.getTime())) {
+      const d = String(parsed.getUTCDate()).padStart(2, '0');
+      const m = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+      const y = parsed.getUTCFullYear();
+      return `${d}/${m}/${y}`;
+    }
+    return val;
+  };
+
+  const calculateDisplayAge = (dobVal?: string, ageVal?: string): string => {
+    if (ageVal && parseInt(ageVal, 10) > 0) return ageVal;
+    if (!dobVal) return '26';
+    const isoMatch = dobVal.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const birthYear = parseInt(isoMatch[1], 10);
+      const birthMonth = parseInt(isoMatch[2], 10) - 1;
+      const birthDay = parseInt(isoMatch[3], 10);
+      const today = new Date();
+      let diff = today.getFullYear() - birthYear;
+      const m = today.getMonth() - birthMonth;
+      if (m < 0 || (m === 0 && today.getDate() < birthDay)) {
+        diff--;
+      }
+      return diff > 0 ? String(diff) : '26';
+    }
+    return '26';
+  };
+
+  const displayDob = formatDobDisplay(dob) || (age ? `15/08/${2026 - parseInt(age || '25', 10)}` : '15/08/1994');
+  const displayAge = calculateDisplayAge(dob, age);
 
   // Bilingual Field Label Mapper for All 7 Languages
   const getBilingualLabels = (l: LanguageCode) => {
@@ -454,7 +493,7 @@ export default function RealisticMemberCard({
     // Age & DOB
     ctx.fillStyle = '#E2E8F0';
     ctx.font = '700 26px monospace, system-ui';
-    const ageStr = age ? `${age} Yrs` : '32 Yrs';
+    const ageStr = `${displayAge} Yrs`;
     ctx.fillText(`${labels.ageLabel}: `, detailX, textY);
     const ageLabelWidth = ctx.measureText(`${labels.ageLabel}: `).width;
 
@@ -732,7 +771,7 @@ export default function RealisticMemberCard({
 
             <div className="space-y-0.5 text-[9px] sm:text-[10px]">
               <p className="text-slate-200 font-mono font-bold">
-                {labels.ageLabel}: <span className="text-amber-300">{age ? `${age} Yrs` : '32 Yrs'}</span>
+                {labels.ageLabel}: <span className="text-amber-300">{displayAge} Yrs</span>
                 <span className="text-slate-300 font-normal"> ({labels.dobLabel}: {displayDob})</span>
               </p>
 

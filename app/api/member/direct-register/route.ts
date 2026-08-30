@@ -59,9 +59,31 @@ export async function POST(req: Request) {
       },
     });
 
+function calculateAgeAndFormatDob(dateVal: Date | string | null | undefined, fallbackAge?: string) {
+  if (!dateVal) {
+    return { dob: '1998-08-15', age: fallbackAge || '26' };
+  }
+  const d = typeof dateVal === 'string' ? new Date(dateVal) : dateVal;
+  if (isNaN(d.getTime())) {
+    return { dob: '1998-08-15', age: fallbackAge || '26' };
+  }
+  const today = new Date();
+  let computedAge = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) {
+    computedAge--;
+  }
+  const isoDate = d.toISOString().split('T')[0];
+  return {
+    dob: isoDate,
+    age: computedAge > 0 ? String(computedAge) : (fallbackAge || '26'),
+  };
+}
+
     if (existingMember && existingMember.membershipId) {
       const totalCount = await prisma.member.count({ where: { status: 'ACTIVE' } });
       const seqNum = parseInt(existingMember.membershipId.replace(/\D/g, '') || '100', 10);
+      const { dob: existingDob, age: computedAge } = calculateAgeAndFormatDob(existingMember.dob, age);
       return NextResponse.json({
         success: true,
         membershipNumber: existingMember.membershipId,
@@ -71,7 +93,8 @@ export async function POST(req: Request) {
         phone: cleanPhone,
         email: existingMember.email || email || 'N/A',
         gender: existingMember.gender || gender || 'Male',
-        age: age || '26',
+        dob: existingDob,
+        age: computedAge,
         govtIdType: govtIdType || 'Aadhaar Card',
         govtIdNumber: govtIdNumber || 'XXXX-XXXX-XXXX',
         photoPreview: existingMember.photoUrl || photoPreview || '/media/thalapathy_vijay_watermark.jpg',
@@ -241,6 +264,8 @@ export async function POST(req: Request) {
 
     const smsMessage = `[TVK-UP SMS Confirmed] Congratulations ${name}! Your TVK membership is active. Your official ID is: ${formattedId}. Welcome to TVK!`;
 
+    const { dob: finalDob, age: finalAge } = calculateAgeAndFormatDob(member.dob, age);
+
     return NextResponse.json({
       success: true,
       membershipNumber: formattedId,
@@ -250,7 +275,8 @@ export async function POST(req: Request) {
       phone: cleanPhone,
       email: email || 'N/A',
       gender: gender || 'Male',
-      age: age || '26',
+      dob: finalDob,
+      age: finalAge,
       govtIdType: govtIdType || 'Aadhaar Card',
       govtIdNumber: govtIdNumber || 'XXXX-XXXX-XXXX',
       photoPreview: photoPreview || '/media/thalapathy_vijay_watermark.jpg',

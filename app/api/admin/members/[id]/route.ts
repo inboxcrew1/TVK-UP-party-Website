@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest, checkAdminScope } from '../../../../../lib/auth';
 import { prisma, ensureSequenceTrackingTable } from '../../../../../lib/prisma';
+import { invalidateMemberStatsCache } from '../../../../../server/memberStats';
 
 export const dynamic = 'force-dynamic';
 
@@ -173,6 +174,9 @@ export async function PATCH(
       },
     });
 
+    // Invalidate stats cache so any district or count changes reflect immediately
+    invalidateMemberStatsCache();
+
     return NextResponse.json({
       success: true,
       message: 'Member details updated successfully.',
@@ -275,6 +279,9 @@ export async function DELETE(
     await prisma.member.delete({
       where: { id },
     });
+
+    // Invalidate stats cache so public live count and admin count decrease in real time
+    invalidateMemberStatsCache();
 
     return NextResponse.json({
       success: true,
