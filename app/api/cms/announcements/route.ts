@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../../lib/prisma';
+import { prisma, ensureCmsTables } from '../../../../lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    await ensureCmsTables();
+
     const announcements = await prisma.announcement.findMany({
       where: {
         status: 'PUBLISHED',
@@ -16,10 +18,10 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      announcements,
+      announcements: announcements || [],
     });
   } catch (error) {
-    console.error('Fetch published announcements error:', error);
-    return NextResponse.json({ error: 'Failed to fetch announcements.' }, { status: 500 });
+    console.warn('Fetch published announcements fallback:', error);
+    return NextResponse.json({ success: true, announcements: [] });
   }
 }

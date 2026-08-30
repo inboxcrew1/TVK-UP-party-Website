@@ -177,3 +177,47 @@ export async function ensureAdminSecurityLockdown() {
     console.warn('ensureAdminSecurityLockdown warning:', err);
   }
 }
+
+let cmsTablesEnsured = false;
+
+export async function ensureCmsTables() {
+  if (cmsTablesEnsured) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS public."Announcement" (
+        "id" TEXT PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "slug" TEXT UNIQUE NOT NULL,
+        "content" TEXT NOT NULL,
+        "imageUrl" TEXT,
+        "category" TEXT NOT NULL,
+        "author" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'DRAFT',
+        "publishAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS public."Event" (
+        "id" TEXT PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "slug" TEXT UNIQUE NOT NULL,
+        "description" TEXT NOT NULL,
+        "imageUrl" TEXT,
+        "location" TEXT NOT NULL,
+        "eventDate" TIMESTAMP(3) NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'DRAFT',
+        "districtId" TEXT,
+        "assemblyId" TEXT,
+        "registrationLink" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    cmsTablesEnsured = true;
+  } catch (err) {
+    console.warn('ensureCmsTables warning:', err);
+  }
+}
+
