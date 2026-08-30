@@ -392,32 +392,57 @@ export default function AdminDashboardPage() {
 
   // Load Office Bearers & Party Posts ONLY when tab is active or Appoint Modal opens
   useEffect(() => {
-    if (activeTab === 'BEARERS' || appointModalOpen) {
+    if (activeTab === 'BEARERS' || appointModalOpen || editBearerModalOpen) {
       loadBearersAndPosts();
     }
-  }, [activeTab, appointModalOpen]);
+  }, [activeTab, appointModalOpen, editBearerModalOpen]);
 
-  // Load Master States ONLY when Appoint Bearer Modal opens
+  // Load Master States when Appoint or Edit Modal opens
   useEffect(() => {
-    if (appointModalOpen && appointStates.length === 0) {
+    if ((appointModalOpen || editBearerModalOpen) && appointStates.length === 0) {
       async function loadStates() {
-        const res = await fetch('/api/geo/states');
-        if (res.ok) setAppointStates(await res.json());
+        try {
+          const res = await fetch('/api/geo/states');
+          if (res.ok) {
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : (Array.isArray(data?.states) ? data.states : []);
+            setAppointStates(list);
+            if (list.length > 0 && !bearerStateId) {
+              const up = list.find((s: any) => s.code === 'UP' || s.name?.includes('Uttar')) || list[0];
+              if (up) setBearerStateId(up.id);
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to load states:', e);
+          setAppointStates([{ id: 'state-up', name: 'Uttar Pradesh', code: 'UP' }]);
+          setBearerStateId('state-up');
+        }
       }
       loadStates();
     }
-  }, [appointModalOpen, appointStates.length]);
+  }, [appointModalOpen, editBearerModalOpen, appointStates.length, bearerStateId]);
 
   useEffect(() => {
     if (!bearerStateId) {
       setAppointDistricts([]);
       return;
     }
+    let cancelled = false;
     async function loadDistricts() {
-      const res = await fetch(`/api/geo/districts?stateId=${bearerStateId}`);
-      if (res.ok) setAppointDistricts(await res.json());
+      try {
+        const res = await fetch(`/api/geo/districts?stateId=${bearerStateId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.districts) ? data.districts : []);
+          if (!cancelled) setAppointDistricts(list);
+        }
+      } catch (e) {
+        console.warn('Failed to load districts:', e);
+        if (!cancelled) setAppointDistricts([]);
+      }
     }
     loadDistricts();
+    return () => { cancelled = true; };
   }, [bearerStateId]);
 
   useEffect(() => {
@@ -425,11 +450,22 @@ export default function AdminDashboardPage() {
       setAppointAssemblies([]);
       return;
     }
+    let cancelled = false;
     async function loadAssemblies() {
-      const res = await fetch(`/api/geo/assemblies?districtId=${bearerDistrictId}`);
-      if (res.ok) setAppointAssemblies(await res.json());
+      try {
+        const res = await fetch(`/api/geo/assemblies?districtId=${bearerDistrictId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.assemblies) ? data.assemblies : []);
+          if (!cancelled) setAppointAssemblies(list);
+        }
+      } catch (e) {
+        console.warn('Failed to load assemblies:', e);
+        if (!cancelled) setAppointAssemblies([]);
+      }
     }
     loadAssemblies();
+    return () => { cancelled = true; };
   }, [bearerDistrictId]);
 
   useEffect(() => {
@@ -437,11 +473,22 @@ export default function AdminDashboardPage() {
       setEditDistricts([]);
       return;
     }
+    let cancelled = false;
     async function loadDistricts() {
-      const res = await fetch(`/api/geo/districts?stateId=${editBearerStateId}`);
-      if (res.ok) setEditDistricts(await res.json());
+      try {
+        const res = await fetch(`/api/geo/districts?stateId=${editBearerStateId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.districts) ? data.districts : []);
+          if (!cancelled) setEditDistricts(list);
+        }
+      } catch (e) {
+        console.warn('Failed to load edit districts:', e);
+        if (!cancelled) setEditDistricts([]);
+      }
     }
     loadDistricts();
+    return () => { cancelled = true; };
   }, [editBearerStateId]);
 
   useEffect(() => {
@@ -449,11 +496,22 @@ export default function AdminDashboardPage() {
       setEditAssemblies([]);
       return;
     }
+    let cancelled = false;
     async function loadAssemblies() {
-      const res = await fetch(`/api/geo/assemblies?districtId=${editBearerDistrictId}`);
-      if (res.ok) setEditAssemblies(await res.json());
+      try {
+        const res = await fetch(`/api/geo/assemblies?districtId=${editBearerDistrictId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (Array.isArray(data?.assemblies) ? data.assemblies : []);
+          if (!cancelled) setEditAssemblies(list);
+        }
+      } catch (e) {
+        console.warn('Failed to load edit assemblies:', e);
+        if (!cancelled) setEditAssemblies([]);
+      }
     }
     loadAssemblies();
+    return () => { cancelled = true; };
   }, [editBearerDistrictId]);
 
   const loadBearersAndPosts = async () => {
@@ -462,12 +520,12 @@ export default function AdminDashboardPage() {
       const resB = await fetch('/api/admin/bearers');
       if (resB.ok) {
         const dataB = await resB.json();
-        setBearers(dataB.bearers || []);
+        setBearers(Array.isArray(dataB?.bearers) ? dataB.bearers : []);
       }
       const resP = await fetch('/api/admin/posts');
       if (resP.ok) {
         const dataP = await resP.json();
-        setPosts(dataP.posts || []);
+        setPosts(Array.isArray(dataP?.posts) ? dataP.posts : []);
       }
     } catch (err) {
       console.error('Error loading bearers:', err);
@@ -3187,7 +3245,7 @@ export default function AdminDashboardPage() {
                       className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500/80 text-white rounded-lg px-3 py-2 text-xs outline-none"
                     >
                       <option value="">Select Party Post Role</option>
-                      {posts.map((p) => (
+                      {(Array.isArray(posts) ? posts : []).map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.title} ({p.scope} Scope - Level {p.level})
                         </option>
@@ -3196,7 +3254,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {bearerPostId && (() => {
-                    const selectedPost = posts.find((p) => p.id === bearerPostId);
+                    const selectedPost = (Array.isArray(posts) ? posts : []).find((p) => p.id === bearerPostId);
                     if (!selectedPost) return null;
 
                     return (
@@ -3215,7 +3273,7 @@ export default function AdminDashboardPage() {
                               className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500/80 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none"
                             >
                               <option value="">Select State</option>
-                              {appointStates.map((s) => (
+                              {(Array.isArray(appointStates) ? appointStates : []).map((s) => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                               ))}
                             </select>
@@ -3233,10 +3291,9 @@ export default function AdminDashboardPage() {
                                 setBearerAssemblyId('');
                               }}
                               className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500/80 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none"
-                              disabled={!bearerStateId}
                             >
                               <option value="">Select District</option>
-                              {appointDistricts.map((d) => (
+                              {(Array.isArray(appointDistricts) ? appointDistricts : []).map((d) => (
                                 <option key={d.id} value={d.id}>{d.name}</option>
                               ))}
                             </select>
@@ -3251,10 +3308,9 @@ export default function AdminDashboardPage() {
                               value={bearerAssemblyId}
                               onChange={(e) => setBearerAssemblyId(e.target.value)}
                               className="w-full bg-slate-900 border border-slate-800 focus:border-amber-500/80 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none"
-                              disabled={!bearerDistrictId}
                             >
                               <option value="">Select Assembly</option>
-                              {appointAssemblies.map((a) => (
+                              {(Array.isArray(appointAssemblies) ? appointAssemblies : []).map((a) => (
                                 <option key={a.id} value={a.id}>{a.name}</option>
                               ))}
                             </select>
@@ -3571,7 +3627,7 @@ export default function AdminDashboardPage() {
                       className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
                     >
                       <option value="">-- Select Organizational Post --</option>
-                      {posts.map((p) => (
+                      {(Array.isArray(posts) ? posts : []).map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.title} ({p.scope})
                         </option>
@@ -3586,7 +3642,7 @@ export default function AdminDashboardPage() {
                       className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
                     >
                       <option value="">-- Select State --</option>
-                      {appointStates.map((s) => (
+                      {(Array.isArray(appointStates) ? appointStates : []).map((s) => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
                     </select>
@@ -3603,7 +3659,7 @@ export default function AdminDashboardPage() {
                       className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
                     >
                       <option value="">-- Select District --</option>
-                      {editDistricts.map((d) => (
+                      {(Array.isArray(editDistricts) ? editDistricts : []).map((d) => (
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
                     </select>
@@ -3616,7 +3672,7 @@ export default function AdminDashboardPage() {
                       className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
                     >
                       <option value="">-- Select Assembly --</option>
-                      {editAssemblies.map((a) => (
+                      {(Array.isArray(editAssemblies) ? editAssemblies : []).map((a) => (
                         <option key={a.id} value={a.id}>{a.name}</option>
                       ))}
                     </select>
