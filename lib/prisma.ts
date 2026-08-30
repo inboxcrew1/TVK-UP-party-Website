@@ -106,3 +106,74 @@ export async function ensureSequenceTrackingTable() {
   }
 }
 
+export const AUTHORIZED_ADMIN_EMAIL = 'tvkuttarpradesh@gmail.com';
+
+let adminLockdownEnsured = false;
+
+/**
+ * Ensures AdminOtpVerification table exists and restricts active admin users
+ * solely to the authorized administrator (tvkuttarpradesh@gmail.com).
+ */
+export async function ensureAdminSecurityLockdown() {
+  if (adminLockdownEnsured) return;
+  try {
+    // 1. Create AdminOtpVerification table if it does not exist
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS public."AdminOtpVerification" (
+        "id" TEXT PRIMARY KEY,
+        "email" TEXT NOT NULL,
+        "otpHash" TEXT NOT NULL,
+        "preAuthToken" TEXT NOT NULL,
+        "expiresAt" TIMESTAMP(3) NOT NULL,
+        "verified" BOOLEAN NOT NULL DEFAULT false,
+        "attempts" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS "AdminOtpVerification_email_idx" 
+      ON public."AdminOtpVerification"("email");
+    `);
+
+    // 2. Check if authorizedUser exists
+    const authorizedUser = await prisma.user.findFirst({
+      where: { email: AUTHORIZED_ADMIN_EMAIL },
+    });
+
+    if (!authorizedUser) {
+      // Find the existing superadmin user and migrate email to tvkuttarpradesh@gmail.com
+      const existingSuperAdmin = await prisma.user.findFirst({
+        where: {
+          adminUser: { isNot: null },
+          status: 'ACTIVE',
+        },
+      });
+
+      if (existingSuperAdmin) {
+        await prisma.user.update({
+          where: { id: existingSuperAdmin.id },
+          data: {
+            email: AUTHORIZED_ADMIN_EMAIL,
+            name: 'TVK Uttar Pradesh Admin',
+          },
+        });
+        console.log(`[SECURITY LOCKDOWN] Migrated superadmin account to ${AUTHORIZED_ADMIN_EMAIL}`);
+      }
+    }
+
+    // 3. Disable any other admin users
+    await prisma.user.updateMany({
+      where: {
+        email: { not: AUTHORIZED_ADMIN_EMAIL },
+        adminUser: { isNot: null },
+      },
+      data: {
+        status: 'DISABLED',
+      },
+    });
+
+    adminLockdownEnsured = true;
+  } catch (err) {
+    console.warn('ensureAdminSecurityLockdown warning:', err);
+  }
+}

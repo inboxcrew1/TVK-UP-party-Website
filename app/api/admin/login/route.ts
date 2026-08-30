@@ -1,99 +1,120 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { prisma } from '../../../../lib/prisma';
-import { comparePassword, signToken } from '../../../../lib/auth';
-
+import crypto from 'crypto';
+import { prisma, ensureAdminSecurityLockdown, AUTHORIZED_ADMIN_EMAIL } from '../../../../lib/prisma';
+import { comparePassword, hashPassword, signToken } from '../../../../lib/auth';
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit';
+import { sendAdminOtpEmail } from '../../../../lib/email';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    // 1. Ensure high-security lockdown & tables exist
+    await ensureAdminSecurityLockdown();
+
+    // 2. Strict Rate Limiting: Max 5 attempts per 10 minutes per IP
     const ip = getClientIp(req);
-    const rateCheck = checkRateLimit(`login_${ip}`, 10, 60 * 1000);
+    const rateCheck = checkRateLimit(`login_${ip}`, 5, 10 * 60 * 1000);
     if (!rateCheck.allowed) {
       return NextResponse.json(
-        { error: 'Too many login attempts. Please try again in 1 minute.' },
+        { error: 'Too many login attempts. For security reasons, please try again in 10 minutes.' },
         { status: 429 }
       );
     }
 
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const { email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
     }
 
-    // Load user and verify
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 3. Unbypassable Gateway Hard-Lock: Only AUTHORIZED_ADMIN_EMAIL is permitted
+    if (normalizedEmail !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+      console.warn(`[SECURITY ALERT] Rejected unauthorized admin login attempt for: ${normalizedEmail} from IP: ${ip}`);
+      return NextResponse.json(
+        { error: 'Access denied: Unauthorized administrator account.' },
+        { status: 403 }
+      );
+    }
+
+    // 4. Retrieve admin user record
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: AUTHORIZED_ADMIN_EMAIL },
       include: {
         adminUser: {
-          include: {
-            role: true,
-          },
+          include: { role: true },
         },
       },
     });
 
     if (!user || user.status !== 'ACTIVE' || !user.adminUser) {
-      return NextResponse.json({ error: 'Invalid admin credentials or inactive account.' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Admin account is inactive or not configured.' },
+        { status: 401 }
+      );
     }
 
-    // Validate password
+    // 5. Verify primary password
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return NextResponse.json({ error: 'Invalid admin credentials.' }, { status: 401 });
     }
 
-    // Sign session token
-    const token = signToken({
-      userId: user.id,
-      type: 'ADMIN',
-    });
+    // 6. Cryptographically secure 6-digit OTP generation
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = await hashPassword(otp);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
 
-    const cookieStore = await cookies();
-    cookieStore.set('admin_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24 hours
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.adminUser.role.name,
+    // 7. Generate temporary 5-minute pre-auth challenge token
+    const preAuthToken = signToken(
+      {
+        userId: user.id,
+        role: normalizedEmail,
+        type: 'ADMIN',
       },
-    });
-  } catch (error) {
-    console.error('Admin login error:', error);
-    const msg = error instanceof Error ? error.message : 'Login failed';
+      '5m'
+    );
 
-    // Detect DATABASE_URL misconfiguration and return a clear actionable error
-    if (
-      msg.includes('invalid domain character') ||
-      msg.includes('Error parsing connection string') ||
-      msg.includes('database string is invalid') ||
-      msg.includes('P1001') ||
-      msg.includes('ECONNREFUSED') ||
-      msg.includes('connect ETIMEDOUT')
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            'Database connection failed. The DATABASE_URL environment variable on the server is misconfigured or missing. Please update it in your Hostinger Node.js environment settings with the correct Supabase connection string.',
-        },
-        { status: 503 }
+    // 8. Delete previous active OTP challenges for this email
+    try {
+      await prisma.$executeRawUnsafe(
+        `DELETE FROM public."AdminOtpVerification" WHERE "email" = $1`,
+        normalizedEmail
       );
+    } catch (e) {
+      console.warn('Cleanup error on AdminOtpVerification:', e);
     }
 
+    // 9. Save challenge in database
+    const challengeId = crypto.randomUUID();
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO public."AdminOtpVerification" ("id", "email", "otpHash", "preAuthToken", "expiresAt", "verified", "attempts", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, false, 0, NOW())`,
+      challengeId,
+      normalizedEmail,
+      otpHash,
+      preAuthToken,
+      expiresAt
+    );
+
+    // 10. Dispatch OTP via Email to tvkuttarpradesh@gmail.com
+    await sendAdminOtpEmail(normalizedEmail, otp);
+
+    // 11. Return response requiring OTP (DO NOT set admin_token cookie!)
+    return NextResponse.json({
+      success: true,
+      requireOtp: true,
+      preAuthToken,
+      email: normalizedEmail,
+      message: `A 6-digit security verification code has been dispatched to ${normalizedEmail}.`,
+    });
+  } catch (error) {
+    console.error('Admin login exception:', error);
     return NextResponse.json(
-      { error: 'Unable to sign in. Please check your credentials and try again.' },
+      { error: 'Authentication service temporarily unavailable. Please try again.' },
       { status: 500 }
     );
   }
