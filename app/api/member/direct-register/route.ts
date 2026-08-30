@@ -142,52 +142,33 @@ export async function POST(req: Request) {
     let formattedId = `TVK-UP ${nextSeqNumber}`;
     let isExisting = false;
 
-    // Concurrency retry loop for unique constraint safety
-    for (let attempt = 0; attempt < 10; attempt++) {
-      try {
-        member = await prisma.member.create({
-          data: {
-            membershipId: formattedId,
-            fullName: name.trim(),
-            mobile: cleanPhone,
-            email: email ? email.trim() : undefined,
-            gender: gender || 'Male',
-            dob: dob ? new Date(dob) : new Date(1998, 0, 1),
-            photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
-            stateId: stateObj.id,
-            districtId: distObj.id,
-            assemblyId: assObj.id,
-            status: 'ACTIVE',
-          },
-        });
-        break;
-      } catch (createErr: any) {
-        if (createErr?.code === 'P2002') {
-          const target = createErr?.meta?.target;
-          const targetStr = Array.isArray(target) ? target.join(',') : String(target || '');
-          const msg = String(createErr?.message || '');
-
-          // If unique constraint is on mobile, retrieve the registered member
-          if (targetStr.includes('mobile') || msg.includes('mobile')) {
-            const existing = await prisma.member.findFirst({
-              where: { mobile: cleanPhone },
-            });
-            if (existing && existing.membershipId) {
-              member = existing;
-              formattedId = existing.membershipId;
-              nextSeqNumber = parseInt(existing.membershipId.replace(/\D/g, '') || '100', 10);
-              isExisting = true;
-              break;
-            }
-          }
-
-          // Otherwise membershipId collided during concurrent registration -> increment and retry
-          nextSeqNumber += 1;
-          formattedId = `TVK-UP ${nextSeqNumber}`;
-          continue;
-        }
-        throw createErr;
-      }
+    try {
+      member = await prisma.member.create({
+        data: {
+          membershipId: formattedId,
+          fullName: name.trim(),
+          mobile: cleanPhone,
+          email: email ? email.trim() : undefined,
+          gender: gender || 'Male',
+          dob: dob ? new Date(dob) : new Date(1998, 0, 1),
+          photoUrl: photoPreview || '/media/thalapathy_vijay_watermark.jpg',
+          stateId: stateObj.id,
+          districtId: distObj.id,
+          assemblyId: assObj.id,
+          status: 'ACTIVE',
+        },
+      });
+    } catch (createErr: any) {
+      console.error('Member create failed:', createErr);
+      return NextResponse.json({
+        error: `Member create failed: ${createErr?.message || String(createErr)}`,
+        code: createErr?.code,
+        meta: createErr?.meta,
+        stateId: stateObj?.id,
+        districtId: distObj?.id,
+        assemblyId: assObj?.id,
+        formattedId,
+      }, { status: 500 });
     }
 
     const activeCount = await prisma.member.count({ where: { status: 'ACTIVE' } });
