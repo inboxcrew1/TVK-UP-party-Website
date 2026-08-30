@@ -221,3 +221,61 @@ export async function ensureCmsTables() {
   }
 }
 
+let officeBearerTableEnsured = false;
+
+export async function ensureOfficeBearerTable() {
+  if (officeBearerTableEnsured) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS public."OfficeBearer" (
+        "id" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "photoUrl" TEXT,
+        "postId" TEXT NOT NULL,
+        "stateId" TEXT,
+        "districtId" TEXT,
+        "assemblyId" TEXT,
+        "appointmentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "publicVisibility" BOOLEAN NOT NULL DEFAULT true,
+        "bio" TEXT,
+        "email" TEXT,
+        "mobile" TEXT,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "OfficeBearer_pkey" PRIMARY KEY ("id")
+      );
+    `);
+
+    // Safely add columns if missing
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "bearerId" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "dob" TIMESTAMP(3);`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "gender" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "address" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "govtIdType" TEXT;`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."OfficeBearer" ADD COLUMN IF NOT EXISTS "govtIdNumber" TEXT;`);
+
+    await prisma.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "OfficeBearer_bearerId_key" 
+      ON public."OfficeBearer"("bearerId");
+    `);
+
+    // Backfill any existing bearers where bearerId is null
+    const unassignedBearers = await prisma.officeBearer.findMany({
+      where: { bearerId: null },
+    });
+    for (const b of unassignedBearers) {
+      const generatedId = `TVK-OB-2026-00${b.id.slice(0, 4).toUpperCase()}`;
+      await prisma.officeBearer.update({
+        where: { id: b.id },
+        data: { bearerId: generatedId },
+      });
+    }
+
+    officeBearerTableEnsured = true;
+  } catch (err) {
+    console.warn('ensureOfficeBearerTable warning:', err);
+  }
+}
+
+

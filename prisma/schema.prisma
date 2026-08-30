@@ -240,7 +240,13 @@ model PartyPost {
 
 model OfficeBearer {
   id               String    @id @default(uuid())
+  bearerId         String?   @unique
   name             String
+  dob              DateTime?
+  gender           String?
+  address          String?
+  govtIdType       String?
+  govtIdNumber     String?
   photoUrl         String?
   postId           String
   post             PartyPost @relation(fields: [postId], references: [id])

@@ -261,11 +261,36 @@ export default function AdminDashboardPage() {
 
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
+  // Edit Bearer Form State
+  const [editBearerModalOpen, setEditBearerModalOpen] = useState(false);
+  const [editingBearer, setEditingBearer] = useState<any>(null);
+  const [editBearerName, setEditBearerName] = useState('');
+  const [editBearerDob, setEditBearerDob] = useState('');
+  const [editBearerMobile, setEditBearerMobile] = useState('');
+  const [editBearerEmail, setEditBearerEmail] = useState('');
+  const [editBearerGender, setEditBearerGender] = useState('Male');
+  const [editBearerAddress, setEditBearerAddress] = useState('');
+  const [editBearerPostId, setEditBearerPostId] = useState('');
+  const [editBearerStateId, setEditBearerStateId] = useState('');
+  const [editBearerDistrictId, setEditBearerDistrictId] = useState('');
+  const [editBearerAssemblyId, setEditBearerAssemblyId] = useState('');
+  const [editBearerPhotoUrl, setEditBearerPhotoUrl] = useState('');
+  const [editBearerBio, setEditBearerBio] = useState('');
+  const [editDistricts, setEditDistricts] = useState<any[]>([]);
+  const [editAssemblies, setEditAssemblies] = useState<any[]>([]);
+  const editPhotoFileRef = React.useRef<HTMLInputElement>(null);
+  const [isUpdatingBearer, setIsUpdatingBearer] = useState(false);
+
+  // Delete Bearer Confirmation State
+  const [deleteBearerModalOpen, setDeleteBearerModalOpen] = useState(false);
+  const [bearerToDelete, setBearerToDelete] = useState<any>(null);
+  const [isDeletingBearer, setIsDeletingBearer] = useState(false);
+
   // Generate QR Code for Office Bearer ID Pass
   useEffect(() => {
     if (selectedBearerCard) {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://tvkuttarpradesh.org';
-      const obId = `TVK-OB-2026-${selectedBearerCard.id.slice(0, 8).toUpperCase()}`;
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://tvkup.com';
+      const obId = selectedBearerCard.bearerId || `TVK-OB-2026-00${selectedBearerCard.id.slice(0, 4).toUpperCase()}`;
       const verifyUrl = `${baseUrl}/verify?id=${encodeURIComponent(obId)}&name=${encodeURIComponent(selectedBearerCard.name || '')}&post=${encodeURIComponent(selectedBearerCard.post?.title || 'Office Bearer')}`;
       import('qrcode').then((QRCode) => {
         QRCode.toDataURL(verifyUrl, {
@@ -407,6 +432,30 @@ export default function AdminDashboardPage() {
     loadAssemblies();
   }, [bearerDistrictId]);
 
+  useEffect(() => {
+    if (!editBearerStateId) {
+      setEditDistricts([]);
+      return;
+    }
+    async function loadDistricts() {
+      const res = await fetch(`/api/geo/districts?stateId=${editBearerStateId}`);
+      if (res.ok) setEditDistricts(await res.json());
+    }
+    loadDistricts();
+  }, [editBearerStateId]);
+
+  useEffect(() => {
+    if (!editBearerDistrictId) {
+      setEditAssemblies([]);
+      return;
+    }
+    async function loadAssemblies() {
+      const res = await fetch(`/api/geo/assemblies?districtId=${editBearerDistrictId}`);
+      if (res.ok) setEditAssemblies(await res.json());
+    }
+    loadAssemblies();
+  }, [editBearerDistrictId]);
+
   const loadBearersAndPosts = async () => {
     setBearersLoading(true);
     try {
@@ -427,33 +476,295 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Direct PNG Download for Office Bearer ID Card (High-Definition 3x Canvas Capture)
-  const downloadBearerCardAsPng = async () => {
-    const cardEl = document.getElementById('printable-bearer-card');
-    if (!cardEl || !selectedBearerCard) return;
+  // Helper: Format DOB consistently as DD/MM/YYYY for Bearer Pass
+  const formatBearerDobDisplay = (val?: any) => {
+    if (!val) return '15/08/1992';
+    try {
+      const s = typeof val === 'string' ? val : (val.toISOString ? val.toISOString() : String(val));
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        const mon = String(d.getUTCMonth() + 1).padStart(2, '0');
+        return `${day}/${mon}/${d.getUTCFullYear()}`;
+      }
+    } catch (e) {}
+    return '15/08/1992';
+  };
 
+  // High-Definition Native HTML5 2D Canvas Renderer for Office Bearer ID Card (300 DPI Vertical CR80)
+  const renderBearerCardToCanvas = async (mimeType: 'image/png' | 'image/jpeg' = 'image/png'): Promise<string> => {
+    if (!selectedBearerCard) throw new Error('No office bearer selected');
+    const W = 900;
+    const H = 1430;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Could not initialize canvas context');
+
+    // Safe image loader with crossOrigin and immediate fallback
+    const loadImage = (src: string): Promise<HTMLImageElement | null> => {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          const img2 = new Image();
+          img2.onload = () => resolve(img2);
+          img2.onerror = () => resolve(null);
+          img2.src = src;
+        };
+        img.src = src;
+      });
+    };
+
+    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    };
+
+    // 1. Clip outer rounded card boundary (Radius: 36px)
+    roundRect(0, 0, W, H, 36);
+    ctx.clip();
+
+    // 2. Base Background: Clean ivory-to-stone subtle gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#FFFDF9');
+    bgGrad.addColorStop(0.5, '#FAF7F0');
+    bgGrad.addColorStop(1, '#F5EFE6');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Card border
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 8;
+    roundRect(4, 4, W - 8, H - 8, 34);
+    ctx.stroke();
+
+    // 3. Top Header Banner: Deep maroon #800000 to #A00000
+    const headerH = 160;
+    const headerGrad = ctx.createLinearGradient(0, 0, W, 0);
+    headerGrad.addColorStop(0, '#800000');
+    headerGrad.addColorStop(0.5, '#A00000');
+    headerGrad.addColorStop(1, '#800000');
+    ctx.fillStyle = headerGrad;
+    ctx.fillRect(0, 0, W, headerH);
+
+    // Gold separator line under header
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(0, headerH - 6, W, 6);
+
+    // TVK Logo in Header
+    const logoImg = await loadImage('/media/tvk_official_logo.jpg');
+    if (logoImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(80, 80, 42, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logoImg, 38, 38, 84, 84);
+      ctx.restore();
+      ctx.strokeStyle = '#FCD34D';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(80, 80, 42, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Header Text
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 36px system-ui, sans-serif';
+    ctx.fillText('तमिलागा वेत्री कड़गम', W / 2 + (logoImg ? 30 : 0), 75);
+
+    ctx.fillStyle = '#FDE68A';
+    ctx.font = '800 20px monospace, system-ui';
+    ctx.fillText('TVK UTTAR PRADESH SAMITI', W / 2 + (logoImg ? 30 : 0), 115);
+
+    // 4. Centered Photo with Golden Frame
+    const photoW = 280;
+    const photoH = 340;
+    const photoX = (W - photoW) / 2;
+    const photoY = headerH + 45;
+
+    ctx.fillStyle = '#FBBF24';
+    roundRect(photoX - 6, photoY - 6, photoW + 12, photoH + 12, 28);
+    ctx.fill();
+
+    const photoSrc = selectedBearerCard.photoUrl || '/media/leadership.jpg';
+    let photoImg = await loadImage(photoSrc);
+    if (!photoImg) photoImg = await loadImage('/media/leadership.jpg');
+
+    ctx.save();
+    roundRect(photoX, photoY, photoW, photoH, 22);
+    ctx.clip();
+    if (photoImg) {
+      ctx.drawImage(photoImg, photoX, photoY, photoW, photoH);
+    } else {
+      ctx.fillStyle = '#E2E8F0';
+      ctx.fillRect(photoX, photoY, photoW, photoH);
+    }
+    ctx.restore();
+
+    // 5. Role Capsule Banner
+    const roleY = photoY + photoH + 28;
+    const roleH = 50;
+    const roleText = (selectedBearerCard.post?.title || 'State President').toUpperCase();
+    ctx.font = '900 22px system-ui, sans-serif';
+    const roleWidth = Math.max(340, ctx.measureText(roleText).width + 60);
+    const roleX = (W - roleWidth) / 2;
+
+    ctx.fillStyle = '#A00000';
+    roundRect(roleX, roleY, roleWidth, roleH, 25);
+    ctx.fill();
+    ctx.strokeStyle = '#FCD34D';
+    ctx.lineWidth = 3;
+    roundRect(roleX, roleY, roleWidth, roleH, 25);
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.fillText(roleText, W / 2, roleY + 34);
+
+    // 6. White Card Detail Box (Full Name, Official ID No., DOB, Phone)
+    const boxX = 60;
+    const boxY = roleY + roleH + 30;
+    const boxW = W - 120;
+    const boxH = 260;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    roundRect(boxX, boxY, boxW, boxH, 22);
+    ctx.fill();
+    ctx.strokeStyle = '#D6D3D1';
+    ctx.lineWidth = 2;
+    roundRect(boxX, boxY, boxW, boxH, 22);
+    ctx.stroke();
+
+    // Full Name
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#64748B';
+    ctx.font = '700 18px system-ui, sans-serif';
+    ctx.fillText('FULL NAME', boxX + 24, boxY + 36);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = '900 32px system-ui, sans-serif';
+    ctx.fillText(selectedBearerCard.name || '', boxX + 24, boxY + 75);
+
+    // Official ID No.
+    ctx.fillStyle = '#64748B';
+    ctx.font = '700 18px system-ui, sans-serif';
+    ctx.fillText('OFFICIAL ID NO.', boxX + 24, boxY + 122);
+
+    const bearerIdText = selectedBearerCard.bearerId || `TVK-OB-2026-00${selectedBearerCard.id.slice(0, 4).toUpperCase()}`;
+    ctx.fillStyle = '#800000';
+    ctx.font = '900 30px monospace, system-ui';
+    ctx.fillText(bearerIdText, boxX + 24, boxY + 160);
+
+    // Separator line
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(boxX + 24, boxY + 180);
+    ctx.lineTo(boxX + boxW - 24, boxY + 180);
+    ctx.stroke();
+
+    // DOB (Col 1)
+    ctx.fillStyle = '#64748B';
+    ctx.font = '700 17px system-ui, sans-serif';
+    ctx.fillText('DATE OF BIRTH (DOB)', boxX + 24, boxY + 210);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = '800 24px monospace, system-ui';
+    ctx.fillText(formatBearerDobDisplay(selectedBearerCard.dob), boxX + 24, boxY + 242);
+
+    // Phone Number (Col 2)
+    ctx.fillStyle = '#64748B';
+    ctx.font = '700 17px system-ui, sans-serif';
+    ctx.fillText('PHONE NUMBER', boxX + boxW / 2 + 10, boxY + 210);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = '800 24px monospace, system-ui';
+    ctx.fillText(selectedBearerCard.mobile || '+91 9876543210', boxX + boxW / 2 + 10, boxY + 242);
+
+    // 7. QR Verification & Signature Row
+    const verifyY = boxY + boxH + 28;
+    const qrSize = 100;
+    if (bearerCardQr) {
+      const qrImg = await loadImage(bearerCardQr);
+      if (qrImg) {
+        ctx.drawImage(qrImg, boxX, verifyY, qrSize, qrSize);
+        ctx.strokeStyle = '#D6D3D1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(boxX, verifyY, qrSize, qrSize);
+      }
+    }
+
+    ctx.fillStyle = '#059669';
+    ctx.font = '900 20px system-ui, sans-serif';
+    ctx.fillText('✓ VERIFIED', boxX + qrSize + 16, verifyY + 45);
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = '700 16px monospace, system-ui';
+    ctx.fillText('OFFICER PASS', boxX + qrSize + 16, verifyY + 75);
+
+    // Signature on the right
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#800000';
+    ctx.font = 'italic 700 28px serif, cursive';
+    ctx.fillText('Thalapathy Vijay', boxX + boxW, verifyY + 50);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = '800 16px system-ui, sans-serif';
+    ctx.fillText('PARTY PRESIDENT', boxX + boxW, verifyY + 78);
+
+    // 8. Footer Slogan Banner
+    const footerH = 110;
+    const footerY = H - footerH;
+    ctx.fillStyle = '#F5F5F4';
+    ctx.fillRect(0, footerY, W, footerH);
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(0, footerY, W, 4);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#A00000';
+    ctx.font = '900 22px system-ui, sans-serif';
+    ctx.fillText('"பிறப்பொக்கும் எல்லா உயிர்க்கும்"', W / 2, footerY + 45);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = '700 18px system-ui, sans-serif';
+    ctx.fillText('पिराप्पोककुम एल्ला उयिर्कुम - सभी जीव जन्म से समान हैं', W / 2, footerY + 80);
+
+    return canvas.toDataURL(mimeType, 0.95);
+  };
+
+  // Direct PNG / JPG Download for Office Bearer ID Card
+  const downloadBearerCard = async (format: 'png' | 'jpg') => {
+    if (!selectedBearerCard) return;
     setIsDownloadingBearerCard(true);
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(cardEl, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
-      });
-
+      const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+      const dataUrl = await renderBearerCardToCanvas(mime);
       const safeName = (selectedBearerCard.name || 'Bearer').replace(/\s+/g, '_');
-      const url = canvas.toDataURL('image/png');
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `TVK-Office-Bearer-${safeName}.png`;
+      a.href = dataUrl;
+      a.download = `TVK-Office-Bearer-${safeName}.${format}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download bearer card error:', err);
-      alert('Could not generate image download. Please try Print Pass instead.');
+      alert('Could not generate image download: ' + (err?.message || String(err)));
     } finally {
       setIsDownloadingBearerCard(false);
     }
@@ -668,6 +979,11 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: bearerName,
+          dob: bearerDob || null,
+          gender: bearerGender || 'Male',
+          address: bearerAddress || null,
+          govtIdType: bearerGovtIdType || 'Aadhaar Card',
+          govtIdNumber: bearerGovtIdNumber || null,
           postId: bearerPostId,
           stateId: bearerStateId || null,
           districtId: bearerDistrictId || null,
@@ -706,6 +1022,102 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleOpenEditBearer = (b: any) => {
+    setEditingBearer(b);
+    setEditBearerName(b.name || '');
+    let formattedDob = '';
+    if (b.dob) {
+      try {
+        const s = typeof b.dob === 'string' ? b.dob : (b.dob.toISOString ? b.dob.toISOString() : String(b.dob));
+        const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (iso) {
+          formattedDob = `${iso[1]}-${iso[2]}-${iso[3]}`;
+        } else {
+          formattedDob = new Date(b.dob).toISOString().split('T')[0];
+        }
+      } catch (e) {
+        formattedDob = '';
+      }
+    }
+    setEditBearerDob(formattedDob);
+    setEditBearerMobile(b.mobile || '');
+    setEditBearerEmail(b.email || '');
+    setEditBearerGender(b.gender || 'Male');
+    setEditBearerAddress(b.address || '');
+    setEditBearerPostId(b.postId || b.post?.id || '');
+    setEditBearerStateId(b.stateId || '');
+    setEditBearerDistrictId(b.districtId || '');
+    setEditBearerAssemblyId(b.assemblyId || '');
+    setEditBearerPhotoUrl(b.photoUrl || '');
+    setEditBearerBio(b.bio || '');
+    setEditBearerModalOpen(true);
+  };
+
+  const handleSaveEditBearer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBearer) return;
+    setIsUpdatingBearer(true);
+    try {
+      const res = await fetch(`/api/admin/bearers/${editingBearer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editBearerName,
+          dob: editBearerDob || null,
+          mobile: editBearerMobile || null,
+          email: editBearerEmail || null,
+          gender: editBearerGender || 'Male',
+          address: editBearerAddress || null,
+          postId: editBearerPostId || null,
+          stateId: editBearerStateId || null,
+          districtId: editBearerDistrictId || null,
+          assemblyId: editBearerAssemblyId || null,
+          photoUrl: editBearerPhotoUrl || null,
+          bio: editBearerBio || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update office bearer');
+      alert('Office bearer updated successfully!');
+      setEditBearerModalOpen(false);
+      if (selectedBearerCard && selectedBearerCard.id === editingBearer.id) {
+        setSelectedBearerCard(data.bearer);
+      }
+      await loadBearersAndPosts();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsUpdatingBearer(false);
+    }
+  };
+
+  const handleOpenDeleteBearer = (b: any) => {
+    setBearerToDelete(b);
+    setDeleteBearerModalOpen(true);
+  };
+
+  const handleConfirmDeleteBearer = async () => {
+    if (!bearerToDelete) return;
+    setIsDeletingBearer(true);
+    try {
+      const res = await fetch(`/api/admin/bearers/${bearerToDelete.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete office bearer');
+      setDeleteBearerModalOpen(false);
+      setBearerToDelete(null);
+      if (selectedBearerCard && selectedBearerCard.id === bearerToDelete.id) {
+        setSelectedBearerCard(null);
+      }
+      await loadBearersAndPosts();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsDeletingBearer(false);
+    }
+  };
+
   const handleToggleBearerStatus = async (bearerId: string, currentStatus: string) => {
     try {
       const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -718,24 +1130,6 @@ export default function AdminDashboardPage() {
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Update failed');
-      }
-
-      await loadBearersAndPosts();
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleDeleteBearer = async (bearerId: string) => {
-    if (!confirm('Are you sure you want to remove this office bearer?')) return;
-    try {
-      const res = await fetch(`/api/admin/bearers/${bearerId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Removal failed');
       }
 
       await loadBearersAndPosts();
@@ -1679,7 +2073,7 @@ export default function AdminDashboardPage() {
                               {b.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4">
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => setSelectedBearerCard(b)}
@@ -1688,16 +2082,16 @@ export default function AdminDashboardPage() {
                                 <ShieldCheck className="w-3 h-3 text-amber-400" /> OFFICIAL ID CARD
                               </button>
                               <button
-                                onClick={() => handleToggleBearerStatus(b.id, b.status)}
-                                className="text-[10px] font-bold text-slate-300 hover:text-white px-2 py-1 bg-slate-850 hover:bg-slate-800 border border-slate-800 rounded-lg transition-all"
+                                onClick={() => handleOpenEditBearer(b)}
+                                className="text-[10px] font-bold text-amber-400 hover:text-amber-300 px-2.5 py-1 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/40 rounded-lg transition-all flex items-center gap-1 uppercase tracking-wider"
                               >
-                                TOGGLE STATUS
+                                <Edit3 className="w-3 h-3 text-amber-400" /> EDIT
                               </button>
                               <button
-                                onClick={() => handleDeleteBearer(b.id)}
-                                className="text-[10px] font-bold text-red-400 hover:text-red-300 px-2 py-1 bg-slate-850 hover:bg-slate-850/60 border border-slate-805 rounded-lg transition-all"
+                                onClick={() => handleOpenDeleteBearer(b)}
+                                className="text-[10px] font-bold text-red-400 hover:text-red-300 px-2 py-1 bg-slate-850 hover:bg-slate-850/60 border border-slate-805 rounded-lg transition-all flex items-center gap-1 uppercase tracking-wider"
                               >
-                                REMOVE
+                                <Trash2 className="w-3 h-3 text-red-400" /> DELETE
                               </button>
                             </div>
                           </td>
@@ -1716,27 +2110,30 @@ export default function AdminDashboardPage() {
       {/* OFFICIAL TVK PARTY OFFICE BEARER ID PASS MODAL (STANDARD VERTICAL CR80 CARD FORMAT) */}
       <AnimatePresence>
         {selectedBearerCard && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="flex flex-col items-center gap-4 my-auto relative text-white"
+              className="bg-slate-900 border border-amber-500/30 rounded-3xl p-5 shadow-2xl flex flex-col items-center gap-4 relative max-w-sm w-full my-8"
             >
-              {/* Modal Header Actions */}
-              <div className="w-full max-w-[290px] flex items-center justify-between px-1">
-                <span className="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5 font-display">
-                  <ShieldCheck className="w-4 h-4 text-amber-400" /> Bearer ID Pass
-                </span>
-                <button
-                  onClick={() => setSelectedBearerCard(null)}
-                  className="text-slate-600 hover:text-slate-900 bg-slate-800 hover:bg-slate-700 p-1.5 rounded-full"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              {/* Close Icon Top Right */}
+              <button
+                onClick={() => setSelectedBearerCard(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-all z-20"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Modal Title Badge */}
+              <div className="flex items-center gap-1.5 text-amber-400 text-xs font-black uppercase tracking-wider font-display">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>BEARER ID PASS</span>
               </div>
 
-              {/* STANDARD VERTICAL CR80 PHYSICAL ID CARD (290px x 460px - Standard 1:1.58 Vertical Ratio) */}
+              {/* 
+                THE OFFICIAL VERTICAL ID PASS CANVAS (300 DPI STANDARD CR80 PROPORTION)
+              */}
               <div
                 id="printable-bearer-card"
                 className="w-[290px] h-[460px] bg-gradient-to-b from-[#FFFDF9] via-[#FAF7F0] to-[#F5EFE6] border-2 border-amber-500 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col justify-between select-none text-slate-900"
@@ -1793,15 +2190,15 @@ export default function AdminDashboardPage() {
                     <div>
                       <span className="text-slate-600 text-[8px] uppercase block font-bold">Official ID No.</span>
                       <span className="text-[#800000] font-mono font-extrabold text-[11px] block leading-tight">
-                        TVK-OB-2026-00{selectedBearerCard.id.slice(0, 4).toUpperCase()}
+                        {selectedBearerCard.bearerId || `TVK-OB-2026-00${selectedBearerCard.id.slice(0, 4).toUpperCase()}`}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200">
                       <div>
                         <span className="text-slate-600 text-[8px] uppercase block font-bold">Date of Birth (DOB)</span>
-                        <span className="text-slate-900 font-extrabold text-[9.5px] block">
-                          {selectedBearerCard.dob ? new Date(selectedBearerCard.dob).toLocaleDateString('en-IN') : '15/08/1992'}
+                        <span className="text-slate-900 font-extrabold text-[9.5px] block font-mono">
+                          {formatBearerDobDisplay(selectedBearerCard.dob)}
                         </span>
                       </div>
                       <div>
@@ -1848,31 +2245,43 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* CARD ACTIONS */}
-              <div className="w-full max-w-[290px] flex items-center gap-2 pt-1">
-                <button
-                  onClick={downloadBearerCardAsPng}
-                  disabled={isDownloadingBearerCard}
-                  className="flex-1 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 uppercase font-display shadow-md active:scale-95"
-                >
-                  {isDownloadingBearerCard ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Saving...</span></>
-                  ) : (
-                    <><Download className="w-3.5 h-3.5 stroke-[2.5]" /><span>Download ID</span></>
-                  )}
-                </button>
-                <button
-                  onClick={() => window.print()}
-                  className="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1 border border-amber-400/30"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print</span>
-                </button>
-                <button
-                  onClick={() => setSelectedBearerCard(null)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-2 rounded-xl"
-                >
-                  Close
-                </button>
+              <div className="w-full max-w-[320px] flex flex-col gap-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => downloadBearerCard('png')}
+                    disabled={isDownloadingBearerCard}
+                    className="flex-1 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 uppercase font-display shadow-md active:scale-95"
+                  >
+                    {isDownloadingBearerCard ? (
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Saving...</span></>
+                    ) : (
+                      <><Download className="w-3.5 h-3.5 stroke-[2.5]" /><span>Download PNG</span></>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => downloadBearerCard('jpg')}
+                    disabled={isDownloadingBearerCard}
+                    className="flex-1 bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 text-xs font-black px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 uppercase font-display shadow-md active:scale-95"
+                  >
+                    <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Download JPG</span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1 border border-amber-400/30"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Print Pass</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedBearerCard(null)}
+                    className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-xl"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -2999,6 +3408,314 @@ export default function AdminDashboardPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Office Bearer Modal */}
+      <AnimatePresence>
+        {editBearerModalOpen && editingBearer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl relative my-8"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <div className="flex items-center gap-2 text-amber-500">
+                  <Edit3 className="w-6 h-6" />
+                  <div>
+                    <h3 className="text-base font-bold uppercase tracking-wide font-display text-white">Edit Office Bearer</h3>
+                    <p className="text-[11px] text-slate-400">Update personal information, post designation, and administrative jurisdiction.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditBearerModalOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Immutable ID Badge */}
+              <div className="bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold font-mono">
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>Permanent Bearer ID:</span>
+                  <span className="text-white font-black text-sm tracking-wider">
+                    {editingBearer.bearerId || `TVK-OB-2026-00${editingBearer.id.slice(0, 4).toUpperCase()}`}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold">Strictly Immutable</span>
+              </div>
+
+              <form onSubmit={handleSaveEditBearer} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                {/* Photo & Basic Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Photo */}
+                  <div className="flex flex-col items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="w-24 h-28 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center shadow-inner">
+                      {editBearerPhotoUrl ? (
+                        <img loading="lazy" decoding="async" src={editBearerPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon className="w-8 h-8 text-slate-600" />
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={editPhotoFileRef}
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const compressed = await compressImageFile(file, 600, 0.75);
+                            setEditBearerPhotoUrl(compressed);
+                          } catch (err) {
+                            alert('Failed to process photo.');
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editPhotoFileRef.current?.click()}
+                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/40 rounded px-2.5 py-1"
+                    >
+                      Change Photo
+                    </button>
+                  </div>
+
+                  {/* Name, DOB, Gender */}
+                  <div className="sm:col-span-2 space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editBearerName}
+                        onChange={(e) => setEditBearerName(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">DOB (Date of Birth) *</label>
+                        <input
+                          type="date"
+                          value={editBearerDob}
+                          onChange={(e) => setEditBearerDob(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Gender</label>
+                        <select
+                          value={editBearerGender}
+                          onChange={(e) => setEditBearerGender(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact: Phone & Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Phone Number (10 Digits)</label>
+                    <input
+                      type="tel"
+                      value={editBearerMobile}
+                      onChange={(e) => setEditBearerMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={editBearerEmail}
+                      onChange={(e) => setEditBearerEmail(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Permanent Residential Address</label>
+                  <input
+                    type="text"
+                    value={editBearerAddress}
+                    onChange={(e) => setEditBearerAddress(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                  />
+                </div>
+
+                {/* Party Post & Scopes */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Party Post / Designation *</label>
+                    <select
+                      value={editBearerPostId}
+                      onChange={(e) => setEditBearerPostId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                    >
+                      <option value="">-- Select Organizational Post --</option>
+                      {posts.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title} ({p.scope})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">State</label>
+                    <select
+                      value={editBearerStateId}
+                      onChange={(e) => setEditBearerStateId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                    >
+                      <option value="">-- Select State --</option>
+                      {appointStates.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* District & Assembly */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">District</label>
+                    <select
+                      value={editBearerDistrictId}
+                      onChange={(e) => setEditBearerDistrictId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                    >
+                      <option value="">-- Select District --</option>
+                      {editDistricts.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Assembly</label>
+                    <select
+                      value={editBearerAssemblyId}
+                      onChange={(e) => setEditBearerAssemblyId(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none"
+                    >
+                      <option value="">-- Select Assembly --</option>
+                      {editAssemblies.map((a) => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Bio / Notes */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Bio / Designation Notes</label>
+                  <textarea
+                    rows={2}
+                    value={editBearerBio}
+                    onChange={(e) => setEditBearerBio(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-amber-500 text-white rounded-lg p-2.5 text-xs outline-none resize-none"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setEditBearerModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingBearer}
+                    className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 text-xs font-bold px-6 py-2.5 rounded-lg transition-all uppercase tracking-wider flex items-center gap-2"
+                  >
+                    {isUpdatingBearer && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Two-Step Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteBearerModalOpen && bearerToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-slate-900 border border-red-500/40 rounded-2xl p-6 shadow-2xl relative"
+            >
+              <div className="flex items-center gap-3 text-red-400 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Delete Office Bearer?</h3>
+                  <p className="text-xs text-slate-400">This action is permanent and cannot be undone.</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2 mb-6 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-semibold">Office Bearer Name:</span>
+                  <span className="text-white font-bold">{bearerToDelete.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-semibold">Permanent Bearer ID:</span>
+                  <span className="text-amber-400 font-mono font-bold">
+                    {bearerToDelete.bearerId || `TVK-OB-2026-00${bearerToDelete.id.slice(0, 4).toUpperCase()}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 font-semibold">Party Post:</span>
+                  <span className="text-slate-300 font-semibold">{bearerToDelete.post?.title || 'Office Bearer'}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteBearerModalOpen(false);
+                    setBearerToDelete(null);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteBearer}
+                  disabled={isDeletingBearer}
+                  className="bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-all uppercase tracking-wider flex items-center gap-2 shadow-lg"
+                >
+                  {isDeletingBearer && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Delete Permanently
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

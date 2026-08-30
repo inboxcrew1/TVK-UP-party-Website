@@ -1,32 +1,10 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { Prisma } from '@prisma/client';
 import { getAdminFromRequest, checkAdminScope, AdminScopeItem } from '../../../../lib/auth';
-import { prisma } from '../../../../lib/prisma';
+import { prisma, ensureOfficeBearerTable } from '../../../../lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-async function ensureOfficeBearerTable() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "OfficeBearer" (
-      "id" TEXT NOT NULL,
-      "name" TEXT NOT NULL,
-      "photoUrl" TEXT,
-      "postId" TEXT NOT NULL,
-      "stateId" TEXT,
-      "districtId" TEXT,
-      "assemblyId" TEXT,
-      "appointmentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-      "publicVisibility" BOOLEAN NOT NULL DEFAULT true,
-      "bio" TEXT,
-      "email" TEXT,
-      "mobile" TEXT,
-      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "OfficeBearer_pkey" PRIMARY KEY ("id")
-    );
-  `);
-}
 
 export async function GET(req: Request) {
   try {
@@ -58,7 +36,7 @@ export async function GET(req: Request) {
         post: true,
       },
       orderBy: {
-        appointmentDate: 'desc',
+        createdAt: 'desc',
       },
     });
 
@@ -84,6 +62,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       name,
+      dob,
+      gender,
+      address,
+      govtIdType,
+      govtIdNumber,
       postId,
       stateId,
       districtId,
@@ -146,9 +129,28 @@ export async function POST(req: Request) {
       );
     }
 
+    // Parse date of birth cleanly
+    let parsedDob: Date | null = null;
+    if (dob) {
+      const d = new Date(dob);
+      if (!isNaN(d.getTime())) {
+        parsedDob = d;
+      }
+    }
+
+    // Generate unique permanent Bearer ID server-side
+    const uniqueHex = crypto.randomBytes(2).toString('hex').toUpperCase();
+    const generatedBearerId = `TVK-OB-2026-00${uniqueHex}`;
+
     const bearer = await prisma.officeBearer.create({
       data: {
+        bearerId: generatedBearerId,
         name: name.trim(),
+        dob: parsedDob,
+        gender: gender ? String(gender).trim() : null,
+        address: address ? String(address).trim() : null,
+        govtIdType: govtIdType ? String(govtIdType).trim() : null,
+        govtIdNumber: govtIdNumber ? String(govtIdNumber).trim() : null,
         postId: post.id,
         stateId: resolvedStateId,
         districtId: resolvedDistrictId,
