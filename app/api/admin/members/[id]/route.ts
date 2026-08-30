@@ -26,8 +26,6 @@ export async function GET(
         district: true,
         assembly: true,
         state: true,
-        addresses: true,
-        documents: true,
       },
     });
 
@@ -62,10 +60,6 @@ export async function GET(
         districtName: member.district?.name || '',
         assemblyId: member.assemblyId,
         assemblyName: member.assembly?.name || '',
-        address: member.addresses?.[0]?.address || '',
-        pincode: member.addresses?.[0]?.pincode || '',
-        govtIdType: member.documents?.[0]?.documentType || 'Aadhaar Card',
-        govtIdNumber: member.documents?.[0]?.documentNo || '',
         photoUrl: member.photoUrl,
         joiningDate: member.joiningDate,
       },
@@ -94,7 +88,6 @@ export async function PATCH(
 
     const existingMember = await prisma.member.findUnique({
       where: { id },
-      include: { addresses: true, documents: true },
     });
 
     if (!existingMember) {
@@ -121,10 +114,6 @@ export async function PATCH(
       gender,
       districtId,
       assemblyId,
-      address,
-      pincode,
-      govtIdType,
-      govtIdNumber,
     } = body;
 
     // Validation
@@ -174,7 +163,7 @@ export async function PATCH(
     if (districtId) updateData.districtId = districtId;
     if (assemblyId) updateData.assemblyId = assemblyId;
 
-    // Update Member row
+    // Update Member row directly in production PostgreSQL
     const updatedMember = await prisma.member.update({
       where: { id },
       data: updateData,
@@ -183,51 +172,6 @@ export async function PATCH(
         assembly: true,
       },
     });
-
-    // Update or create address record
-    if (address || pincode) {
-      const firstAddress = existingMember.addresses?.[0];
-      if (firstAddress) {
-        await prisma.memberAddress.update({
-          where: { id: firstAddress.id },
-          data: {
-            address: address ? address.trim() : firstAddress.address,
-            pincode: pincode ? pincode.trim() : firstAddress.pincode,
-          },
-        });
-      } else {
-        await prisma.memberAddress.create({
-          data: {
-            memberId: id,
-            address: address ? address.trim() : 'Uttar Pradesh',
-            pincode: pincode ? pincode.trim() : '203001',
-          },
-        });
-      }
-    }
-
-    // Update or create document record
-    if (govtIdType || govtIdNumber) {
-      const firstDoc = existingMember.documents?.[0];
-      if (firstDoc) {
-        await prisma.memberDocument.update({
-          where: { id: firstDoc.id },
-          data: {
-            documentType: govtIdType || firstDoc.documentType,
-            documentNo: govtIdNumber ? govtIdNumber.trim() : firstDoc.documentNo,
-          },
-        });
-      } else {
-        await prisma.memberDocument.create({
-          data: {
-            memberId: id,
-            documentType: govtIdType || 'Aadhaar Card',
-            documentNo: govtIdNumber ? govtIdNumber.trim() : 'XXXX-XXXX-XXXX',
-            fileUrl: '',
-          },
-        });
-      }
-    }
 
     return NextResponse.json({
       success: true,
@@ -289,14 +233,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden: Member falls outside your scope.' }, { status: 403 });
     }
 
-    // 1. Safely remove dependent child records
-    await prisma.memberDocument.deleteMany({ where: { memberId: id } });
-    await prisma.memberAddress.deleteMany({ where: { memberId: id } });
-    await prisma.membershipStatusHistory.deleteMany({ where: { memberId: id } });
-    await prisma.consent.deleteMany({ where: { memberId: id } });
-    await prisma.idCard.deleteMany({ where: { memberId: id } });
+    // Safely delete optional child records if present in database
+    try { await prisma.memberDocument.deleteMany({ where: { memberId: id } }); } catch (e) {}
+    try { await prisma.memberAddress.deleteMany({ where: { memberId: id } }); } catch (e) {}
+    try { await prisma.membershipStatusHistory.deleteMany({ where: { memberId: id } }); } catch (e) {}
+    try { await prisma.consent.deleteMany({ where: { memberId: id } }); } catch (e) {}
+    try { await prisma.idCard.deleteMany({ where: { memberId: id } }); } catch (e) {}
 
-    // 2. Permanently delete the member record
+    // Permanently delete the member record from production database
     await prisma.member.delete({
       where: { id },
     });
