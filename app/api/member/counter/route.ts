@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../../lib/prisma';
+import { prisma, ensureSequenceTrackingTable } from '../../../../lib/prisma';
 import {
   getLiveStatewideStats,
   getDistrictMemberCount,
@@ -58,6 +58,7 @@ export async function GET(req: Request) {
     }
 
     try {
+      await ensureSequenceTrackingTable();
       const seqRecord = await prisma.membershipCount.findFirst({
         where: {
           scopeType: 'SEQUENCE',
