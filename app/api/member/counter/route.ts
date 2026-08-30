@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '../../../../lib/prisma';
 import {
   getLiveStatewideStats,
   getDistrictMemberCount,
@@ -41,6 +42,22 @@ export async function GET(req: Request) {
 
     const count = district ? (assembly ? assemblyCount : districtCount) : statewide.activeMembers;
 
+    // Database single source of truth for latest assigned Membership ID
+    const membersWithId = await prisma.member.findMany({
+      where: { membershipId: { not: null } },
+      select: { membershipId: true },
+    });
+    let maxSeq = 100;
+    for (const m of membersWithId) {
+      if (m.membershipId) {
+        const num = parseInt(m.membershipId.replace(/\D/g, ''), 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    }
+    const currentId = `TVK-UP ${maxSeq}`;
+
     const res = NextResponse.json({
       count,
       totalMembers: statewide.totalMembers,
@@ -52,7 +69,7 @@ export async function GET(req: Request) {
       assemblyCount,
       allDistricts: allDistrictsMap,
       assemblies: assembliesMap,
-      currentId: `TVK-UP ${100 + statewide.activeMembers}`,
+      currentId,
     });
 
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

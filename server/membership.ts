@@ -107,30 +107,26 @@ export async function duplicateCheck(
 }
 
 /**
- * Atomically generates the next unique sequential Membership ID (e.g. TVK-UP-00000001)
+ * Generates the next unique sequential Membership ID (e.g. TVK-UP 101, TVK-UP 128)
  */
-export async function generateNextMembershipId(tx: Prisma.TransactionClient): Promise<string> {
-  const countRecord = await tx.membershipCount.upsert({
-    where: {
-      scopeType_scopeId: {
-        scopeType: 'SEQUENCE',
-        scopeId: 'TVK-UP',
-      },
-    },
-    update: {
-      activeCount: {
-        increment: 1,
-      },
-    },
-    create: {
-      scopeType: 'SEQUENCE',
-      scopeId: 'TVK-UP',
-      activeCount: 1,
-    },
+export async function generateNextMembershipId(tx?: Prisma.TransactionClient): Promise<string> {
+  const client: any = tx || prisma;
+  const existingMembersWithId = await client.member.findMany({
+    where: { membershipId: { not: null } },
+    select: { membershipId: true },
   });
 
-  const seq = countRecord.activeCount.toString().padStart(8, '0');
-  return `TVK-UP-${seq}`;
+  let maxSeq = 100;
+  for (const m of existingMembersWithId) {
+    if (m.membershipId) {
+      const num = parseInt(m.membershipId.replace(/\D/g, ''), 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    }
+  }
+
+  return `TVK-UP ${maxSeq + 1}`;
 }
 
 /**

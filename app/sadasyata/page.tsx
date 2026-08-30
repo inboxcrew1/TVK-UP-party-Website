@@ -669,10 +669,17 @@ export default function SadasyataPage() {
       });
 
       const data = await res.json();
+
+      if (!res.ok || !data.success || !data.membershipNumber) {
+        alert(data.error || 'पंजीकरण में त्रुटि हुई। कृपया पुनः प्रयास करें। (Registration error: Could not complete registration)');
+        setIsSubmitting(false);
+        return;
+      }
+
       const newCardObj = {
-        membershipNumber: data.membershipNumber || 'TVK-UP 100',
-        counterNumber: data.counterNumber || 100,
-        smsConfirmation: data.smsConfirmation || `[TVK-UP SMS Confirmed] Congratulations ${formData.name}! Your official ID is: ${data.membershipNumber || 'TVK-UP 100'}.`,
+        membershipNumber: data.membershipNumber,
+        counterNumber: data.counterNumber,
+        smsConfirmation: data.smsConfirmation || `[TVK-UP SMS Confirmed] Congratulations ${formData.name}! Your official ID is: ${data.membershipNumber}.`,
         fullName: formData.name,
         phone: cleanPhone,
         email: formData.email || 'N/A',
@@ -711,6 +718,15 @@ export default function SadasyataPage() {
 
       setFoundCardsList([newCardObj]);
       setSelectedCard(newCardObj);
+
+      // Instantly refresh live member count from database
+      try {
+        const counterRes = await fetch('/api/member/counter');
+        if (counterRes.ok) {
+          const stats = await counterRes.json();
+          setLiveStatsCount(stats.activeMembers ?? stats.totalMembers ?? stats.count ?? 0);
+        }
+      } catch (e) {}
 
     } catch (err) {
       console.error(err);

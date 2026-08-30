@@ -59,28 +59,30 @@ export async function POST(req: Request) {
       );
     }
 
-    const cards = members.map((m, idx) => {
-      const seqNum = parseInt((m.membershipId || '').replace(/\D/g, '') || '100', 10);
-      return {
-        membershipNumber: m.membershipId || `TVK-UP ${100 + idx}`,
-        counterNumber: seqNum,
-        fullName: m.fullName,
-        phone: m.mobile,
-        email: m.email || 'N/A',
-        gender: m.gender || 'Male',
-        age: '25',
-        govtIdType: 'Aadhaar Card',
-        govtIdNumber: 'XXXX-XXXX-XXXX',
-        photoPreview: m.photoUrl || '/media/thalapathy_vijay_watermark.jpg',
-        districtName: m.district?.name || 'Lucknow',
-        assemblyName: m.assembly?.name || 'Lucknow Central',
-        stateName: 'Uttar Pradesh',
-        addressLine: `${m.assembly?.name || 'Central Assembly'}, ${m.district?.name || 'Lucknow'}`,
-        status: m.status,
-        joinedAt: new Date(m.joiningDate).toLocaleDateString('en-IN'),
-        smsConfirmation: `[TVK-UP Confirmed] Membership Verified: ${m.membershipId || 'TVK-UP 100'} for ${m.fullName}.`,
-      };
-    });
+    const cards = members
+      .filter((m) => !!m.membershipId)
+      .map((m) => {
+        const seqNum = parseInt(m.membershipId!.replace(/\D/g, '') || '100', 10);
+        return {
+          membershipNumber: m.membershipId!,
+          counterNumber: seqNum,
+          fullName: m.fullName,
+          phone: m.mobile,
+          email: m.email || 'N/A',
+          gender: m.gender || 'Male',
+          age: '26',
+          govtIdType: 'Aadhaar Card',
+          govtIdNumber: 'XXXX-XXXX-XXXX',
+          photoPreview: m.photoUrl || '/media/thalapathy_vijay_watermark.jpg',
+          districtName: m.district?.name || 'Lucknow',
+          assemblyName: m.assembly?.name || 'Lucknow Central',
+          stateName: 'Uttar Pradesh',
+          addressLine: `${m.assembly?.name || 'Central Assembly'}, ${m.district?.name || 'Lucknow'}`,
+          status: m.status,
+          joinedAt: new Date(m.joiningDate).toLocaleDateString('en-IN'),
+          smsConfirmation: `[TVK-UP Confirmed] Membership Verified: ${m.membershipId} for ${m.fullName}.`,
+        };
+      });
 
     return NextResponse.json({
       success: true,
