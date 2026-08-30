@@ -56,6 +56,23 @@ export async function GET(req: Request) {
         }
       }
     }
+
+    try {
+      const seqRecord = await prisma.membershipCount.findUnique({
+        where: {
+          scopeType_scopeId: {
+            scopeType: 'SEQUENCE',
+            scopeId: 'TVK-UP',
+          },
+        },
+      });
+      if (seqRecord && seqRecord.activeCount > maxSeq) {
+        maxSeq = seqRecord.activeCount;
+      }
+    } catch (seqErr) {
+      console.warn('Sequence tracker read error in counter:', seqErr);
+    }
+
     const currentId = `TVK-UP ${maxSeq}`;
 
     const res = NextResponse.json({

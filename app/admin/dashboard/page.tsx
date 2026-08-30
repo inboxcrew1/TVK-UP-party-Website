@@ -32,6 +32,9 @@ import {
   Camera,
   RefreshCw,
   Printer,
+  Edit3,
+  Trash2,
+  Lock,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -113,6 +116,32 @@ export default function AdminDashboardPage() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Edit Member Modal State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editMemberId, setEditMemberId] = useState<string | null>(null);
+  const [editMembershipId, setEditMembershipId] = useState('');
+  const [editFullName, setEditFullName] = useState('');
+  const [editMobile, setEditMobile] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editDob, setEditDob] = useState('');
+  const [editGender, setEditGender] = useState('Male');
+  const [editAddress, setEditAddress] = useState('');
+  const [editPincode, setEditPincode] = useState('');
+  const [editGovtIdType, setEditGovtIdType] = useState('Aadhaar Card');
+  const [editGovtIdNumber, setEditGovtIdNumber] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState<string | null>(null);
+
+  // Delete Member Confirmation Modal State
+  const [deleteConfirmData, setDeleteConfirmData] = useState<{
+    memberId: string;
+    memberName: string;
+    membershipId: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Main Tabs navigation state: REGISTRY | BEARERS | VERIFY
   const [activeTab, setActiveTab] = useState<'REGISTRY' | 'BEARERS' | 'VERIFY'>('REGISTRY');
@@ -785,6 +814,142 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Open Edit Member modal with current database values
+  const handleOpenEditModal = async (m: Member) => {
+    setEditMemberId(m.id);
+    setEditMembershipId(m.membershipId || 'PENDING');
+    setEditFullName(m.fullName || '');
+    setEditMobile(m.mobile ? m.mobile.replace(/^\+91/, '') : '');
+    setEditEmail(m.email || '');
+    setEditDob(m.dob ? new Date(m.dob).toISOString().split('T')[0] : '');
+    setEditGender(m.gender || 'Male');
+    setEditGovtIdType(m.documents?.[0]?.documentType || m.govtIdType || 'Aadhaar Card');
+    setEditGovtIdNumber(m.documents?.[0]?.documentNo || m.govtIdNumber || '');
+    setEditAddress('');
+    setEditPincode('');
+    setEditError(null);
+    setEditSuccess(null);
+    setEditModalOpen(true);
+
+    try {
+      const res = await fetch(`/api/admin/members/${m.id}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.member) {
+          const det = json.member;
+          if (det.address) setEditAddress(det.address);
+          if (det.pincode) setEditPincode(det.pincode);
+          if (det.govtIdType) setEditGovtIdType(det.govtIdType);
+          if (det.govtIdNumber) setEditGovtIdNumber(det.govtIdNumber);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch detailed member info for edit:', e);
+    }
+  };
+
+  // Submit Edit Member corrections to database
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editMemberId) return;
+    setEditSaving(true);
+    setEditError(null);
+    setEditSuccess(null);
+
+    try {
+      const res = await fetch(`/api/admin/members/${editMemberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: editFullName,
+          mobile: editMobile,
+          email: editEmail,
+          dob: editDob,
+          gender: editGender,
+          address: editAddress,
+          pincode: editPincode,
+          govtIdType: editGovtIdType,
+          govtIdNumber: editGovtIdNumber,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error || 'Failed to save changes.');
+        return;
+      }
+
+      setEditSuccess('Member details updated successfully in database!');
+
+      // Update member locally in table
+      setMembers((prev) =>
+        prev.map((item) =>
+          item.id === editMemberId
+            ? {
+                ...item,
+                fullName: editFullName.trim(),
+                mobile: editMobile.startsWith('+') ? editMobile : `+91${editMobile.replace(/\D/g, '')}`,
+                email: editEmail ? editEmail.trim() : null,
+                dob: editDob ? new Date(editDob).toISOString() : item.dob,
+                gender: editGender,
+              }
+            : item
+        )
+      );
+
+      // Close modal after 800ms
+      setTimeout(() => {
+        setEditModalOpen(false);
+        setEditSuccess(null);
+        setReloadTrigger((prev) => prev + 1);
+      }, 800);
+    } catch (err: any) {
+      console.error('Save edit error:', err);
+      setEditError(err?.message || 'Failed to save member corrections.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // Confirm Permanent Deletion of Member
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmData) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/members/${deleteConfirmData.memberId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteError(data.error || 'Failed to delete member.');
+        return;
+      }
+
+      // 1. Immediately remove from local table
+      setMembers((prev) => prev.filter((m) => m.id !== deleteConfirmData.memberId));
+
+      // 2. Decrement counters by 1
+      setDbStats((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+        active: Math.max(0, prev.active - 1),
+      }));
+      setTotalRecords((prev) => Math.max(0, prev - 1));
+
+      // 3. Close modal
+      setDeleteConfirmData(null);
+
+      // 4. Trigger reload
+      setReloadTrigger((prev) => prev + 1);
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setDeleteError(err?.message || 'Network error while deleting member.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Dedicated Member Verification lookup inside Admin Portal
   const handleAdminVerifyLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1095,26 +1260,26 @@ export default function AdminDashboardPage() {
                               </div>
                             </td>
 
-                            {/* Contact Info (Mobile & Email) */}
+                            {/* Contact Info (Mobile & Email) — Crisp Black Typography */}
                             <td className="px-5 py-4">
-                              <span className="text-slate-200 font-mono font-bold block">{m.mobile}</span>
-                              <span className="text-slate-800 text-xs font-bold block mt-0.5">
-                                {m.email || <span className="text-slate-600 italic">No email</span>}
+                              <span className="text-slate-950 font-mono font-bold block text-xs">{m.mobile}</span>
+                              <span className="text-slate-900 text-xs font-medium block mt-0.5">
+                                {m.email || <span className="text-slate-500 italic">No email</span>}
                               </span>
                             </td>
 
-                            {/* District & Assembly */}
+                            {/* District & Assembly — Crisp Black Typography */}
                             <td className="px-5 py-4">
-                              <span className="text-white font-semibold block">{m.district?.name || 'Bulandshahr'}</span>
-                              <span className="text-slate-400 block text-[10px] mt-0.5">
+                              <span className="text-slate-950 font-bold block text-xs">{m.district?.name || 'Bulandshahr'}</span>
+                              <span className="text-slate-800 font-medium block text-[11px] mt-0.5">
                                 {m.assembly?.name || 'Constituency'}
                               </span>
                             </td>
 
                             {/* Govt ID & Document Upload File */}
                             <td className="px-5 py-4">
-                              <span className="text-amber-400 font-bold block text-[11px]">{docType}</span>
-                              <span className="text-slate-300 font-mono block text-[10px] mt-0.5">{docNo}</span>
+                              <span className="text-amber-800 font-bold block text-[11px]">{docType}</span>
+                              <span className="text-slate-900 font-mono block text-[10px] mt-0.5">{docNo}</span>
                               {docFileUrl ? (
                                 <button
                                   type="button"
@@ -1128,12 +1293,12 @@ export default function AdminDashboardPage() {
                                       docNo,
                                     })
                                   }
-                                  className="inline-flex items-center gap-1 text-[10px] text-amber-300 hover:text-amber-200 font-bold underline mt-1 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30"
+                                  className="inline-flex items-center gap-1 text-[10px] text-amber-800 hover:text-amber-950 font-bold underline mt-1 bg-amber-100/60 px-2 py-0.5 rounded border border-amber-300"
                                 >
                                   <FileText className="w-3 h-3" /> View Govt ID File
                                 </button>
                               ) : (
-                                <span className="text-[10px] text-slate-600 block italic mt-0.5">No document file</span>
+                                <span className="text-[10px] text-slate-500 block italic mt-0.5">No document file</span>
                               )}
                             </td>
 
@@ -1158,50 +1323,59 @@ export default function AdminDashboardPage() {
                               </span>
                             </td>
 
-                            {/* Actions */}
+                            {/* Actions Column: EDIT + DELETE */}
                             <td className="px-5 py-4 text-right">
-                              <div className="flex justify-end gap-1.5">
+                              <div className="flex justify-end items-center gap-1.5">
                                 {actionLoadingId === m.id ? (
                                   <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
                                 ) : (
                                   <>
+                                    {/* EDIT / CORRECTION ACTION */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEditModal(m)}
+                                      title="Edit / Correct Member Information"
+                                      className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-2.5 py-1 rounded-md text-[10px] flex items-center gap-1 shadow-sm transition-colors active:scale-95"
+                                    >
+                                      <Edit3 className="w-3 h-3" /> EDIT
+                                    </button>
+
+                                    {/* DELETE ACTION */}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setDeleteConfirmData({
+                                          memberId: m.id,
+                                          memberName: m.fullName,
+                                          membershipId: m.membershipId || 'PENDING',
+                                        })
+                                      }
+                                      title="Delete Member Permanently"
+                                      className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1 rounded-md text-[10px] flex items-center gap-1 shadow-sm transition-colors active:scale-95"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> DELETE
+                                    </button>
+
+                                    {/* Quick APPROVE / REJECT for pending applications */}
                                     {['SUBMITTED', 'UNDER_REVIEW'].includes(m.status) && (
                                       <>
                                         <button
                                           onClick={() => handleApprove(m.id)}
                                           title="Approve Member"
-                                          className="bg-emerald-600 hover:bg-emerald-700 text-white p-1.5 rounded-md transition-colors"
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white p-1 rounded-md transition-colors"
                                         >
-                                          <Check className="w-4 h-4" />
+                                          <Check className="w-3.5 h-3.5" />
                                         </button>
                                         <button
                                           onClick={() =>
                                             setPromptData({ memberId: m.id, actionType: 'REJECT', memberName: m.fullName })
                                           }
                                           title="Reject Member"
-                                          className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-md transition-colors"
+                                          className="bg-red-600 hover:bg-red-700 text-white p-1 rounded-md transition-colors"
                                         >
-                                          <X className="w-4 h-4" />
+                                          <X className="w-3.5 h-3.5" />
                                         </button>
                                       </>
-                                    )}
-                                    {m.status === 'ACTIVE' && (
-                                      <button
-                                        onClick={() =>
-                                          setPromptData({ memberId: m.id, actionType: 'SUSPEND', memberName: m.fullName })
-                                        }
-                                        className="bg-rose-950/50 hover:bg-rose-900/60 text-rose-400 px-2.5 py-1 rounded-md border border-rose-800 font-bold transition-colors text-[10px]"
-                                      >
-                                        SUSPEND
-                                      </button>
-                                    )}
-                                    {m.status === 'SUSPENDED' && (
-                                      <button
-                                        onClick={() => handleReactivate(m.id)}
-                                        className="bg-emerald-950/50 hover:bg-emerald-900/60 text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-800 font-bold transition-colors text-[10px]"
-                                      >
-                                        REACTIVATE
-                                      </button>
                                     )}
                                   </>
                                 )}
@@ -1687,6 +1861,281 @@ export default function AdminDashboardPage() {
                   Close
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Member Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-white border border-stone-300 rounded-2xl p-6 shadow-2xl relative text-slate-900"
+            >
+              <div className="flex items-center gap-3 text-rose-600 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Delete Member Permanently?</h3>
+                  <p className="text-xs text-rose-600 font-semibold">Destructive Action — Cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 my-4 space-y-2 text-xs">
+                <div className="flex justify-between items-center py-1 border-b border-stone-200">
+                  <span className="text-slate-500 font-bold uppercase text-[10px]">Member Name</span>
+                  <span className="text-slate-950 font-bold text-sm">{deleteConfirmData.memberName}</span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-slate-500 font-bold uppercase text-[10px]">Membership ID</span>
+                  <span className="text-amber-800 font-mono font-bold text-sm">{deleteConfirmData.membershipId}</span>
+                </div>
+              </div>
+
+              <p className="text-slate-600 text-xs leading-relaxed mb-4">
+                This action will permanently delete this member record and associated data from the production database. Remaining Membership IDs and numbering sequences will NOT be altered.
+              </p>
+
+              {deleteError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-bold mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setDeleteConfirmData(null);
+                    setDeleteError(null);
+                  }}
+                  className="px-4 py-2 text-xs font-bold text-slate-700 hover:text-slate-950 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider px-5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-md active:scale-95"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {isDeleting ? 'DELETING...' : 'DELETE PERMANENTLY'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit / Correction Member Modal */}
+      <AnimatePresence>
+        {editModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl bg-white border border-stone-300 rounded-2xl shadow-2xl relative text-slate-900 max-h-[90vh] flex flex-col my-auto"
+            >
+              {/* Header */}
+              <div className="p-5 sm:p-6 border-b border-stone-200 flex justify-between items-center bg-stone-50 rounded-t-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                    <Edit3 className="w-5 h-5 text-amber-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-950">Edit / Correct Member Record</h3>
+                    <p className="text-xs text-slate-500 font-medium">Update record directly in the production database</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSaveEdit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                {/* Permanent Membership ID Read-Only Banner */}
+                <div className="bg-amber-50 border border-amber-300/80 rounded-xl p-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-amber-700" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Permanent Membership ID</span>
+                  </div>
+                  <span className="bg-amber-700 text-white font-mono font-black text-xs sm:text-sm px-3 py-1 rounded-lg tracking-wider">
+                    {editMembershipId || 'PENDING'}
+                  </span>
+                </div>
+
+                {editError && (
+                  <div className="p-3 bg-rose-50 border border-rose-300 rounded-lg text-rose-700 text-xs font-bold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {editError}
+                  </div>
+                )}
+
+                {editSuccess && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    {editSuccess}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editFullName}
+                      onChange={(e) => setEditFullName(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-semibold rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Mobile Number (10 Digits) *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={editMobile}
+                      onChange={(e) => setEditMobile(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-mono font-bold rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="Optional"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Gender
+                    </label>
+                    <select
+                      value={editGender}
+                      onChange={(e) => setEditGender(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-semibold rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      value={editDob}
+                      onChange={(e) => setEditDob(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Govt ID Type
+                    </label>
+                    <select
+                      value={editGovtIdType}
+                      onChange={(e) => setEditGovtIdType(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-semibold rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    >
+                      <option value="Aadhaar Card">Aadhaar Card</option>
+                      <option value="Voter ID">Voter ID</option>
+                      <option value="PAN Card">PAN Card</option>
+                      <option value="Driving License">Driving License</option>
+                      <option value="Passport">Passport</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Govt ID Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editGovtIdNumber}
+                      onChange={(e) => setEditGovtIdNumber(e.target.value)}
+                      placeholder="e.g. XXXX-XXXX-XXXX"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-mono rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Pincode
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={editPincode}
+                      onChange={(e) => setEditPincode(e.target.value)}
+                      placeholder="e.g. 203001"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-mono rounded-lg px-3 py-2 text-xs outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                    Residential Address
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    placeholder="Full address..."
+                    className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg p-2.5 text-xs outline-none transition-all resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
+                  <button
+                    type="button"
+                    disabled={editSaving}
+                    onClick={() => setEditModalOpen(false)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-950 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editSaving}
+                    className="bg-[#A00000] hover:bg-[#800000] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider px-6 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-md active:scale-95"
+                  >
+                    {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    {editSaving ? 'SAVING CHANGES...' : 'SAVE CORRECTIONS'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
