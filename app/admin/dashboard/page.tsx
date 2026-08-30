@@ -1202,18 +1202,12 @@ export default function AdminDashboardPage() {
                         <th className="px-5 py-4">Photo</th>
                         <th className="px-5 py-4">Contact Info</th>
                         <th className="px-5 py-4">District & Assembly</th>
-                        <th className="px-5 py-4">Govt ID & File</th>
                         <th className="px-5 py-4">Status</th>
                         <th className="px-5 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/80">
                       {members.map((m, index) => {
-                        const doc = m.documents[0] || {};
-                        const docType = doc.documentType || m.govtIdType || 'Aadhaar Card';
-                        const docNo = doc.documentNo || m.govtIdNumber || 'XXXX-XXXX-XXXX';
-                        const docFileUrl = doc.fileUrl || '';
-
                         return (
                           <tr key={m.id} className="hover:bg-amber-50/50 transition-colors">
                             {/* S.No & ID */}
@@ -1274,32 +1268,6 @@ export default function AdminDashboardPage() {
                               <span className="text-slate-800 font-medium block text-[11px] mt-0.5">
                                 {m.assembly?.name || 'Constituency'}
                               </span>
-                            </td>
-
-                            {/* Govt ID & Document Upload File */}
-                            <td className="px-5 py-4">
-                              <span className="text-amber-800 font-bold block text-[11px]">{docType}</span>
-                              <span className="text-slate-900 font-mono block text-[10px] mt-0.5">{docNo}</span>
-                              {docFileUrl ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPreviewMedia({
-                                      type: 'DOCUMENT',
-                                      title: `Govt ID Copy (${docType})`,
-                                      url: docFileUrl,
-                                      memberName: m.fullName,
-                                      docType,
-                                      docNo,
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-1 text-[10px] text-amber-800 hover:text-amber-950 font-bold underline mt-1 bg-amber-100/60 px-2 py-0.5 rounded border border-amber-300"
-                                >
-                                  <FileText className="w-3 h-3" /> View Govt ID File
-                                </button>
-                              ) : (
-                                <span className="text-[10px] text-slate-500 block italic mt-0.5">No document file</span>
-                              )}
                             </td>
 
                             {/* Status */}
@@ -2056,36 +2024,6 @@ export default function AdminDashboardPage() {
                       value={editDob}
                       onChange={(e) => setEditDob(e.target.value)}
                       className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
-                      Govt ID Type
-                    </label>
-                    <select
-                      value={editGovtIdType}
-                      onChange={(e) => setEditGovtIdType(e.target.value)}
-                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-semibold rounded-lg px-3 py-2 text-xs outline-none transition-all"
-                    >
-                      <option value="Aadhaar Card">Aadhaar Card</option>
-                      <option value="Voter ID">Voter ID</option>
-                      <option value="PAN Card">PAN Card</option>
-                      <option value="Driving License">Driving License</option>
-                      <option value="Passport">Passport</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
-                      Govt ID Number
-                    </label>
-                    <input
-                      type="text"
-                      value={editGovtIdNumber}
-                      onChange={(e) => setEditGovtIdNumber(e.target.value)}
-                      placeholder="e.g. XXXX-XXXX-XXXX"
-                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-mono rounded-lg px-3 py-2 text-xs outline-none transition-all"
                     />
                   </div>
 
