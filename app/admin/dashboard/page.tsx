@@ -35,6 +35,8 @@ import {
   Edit3,
   Trash2,
   Lock,
+  KeyRound,
+  EyeOff,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -142,6 +144,19 @@ export default function AdminDashboardPage() {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Admin Credentials Modal State
+  const [credModalOpen, setCredModalOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [credSaving, setCredSaving] = useState(false);
+  const [credError, setCredError] = useState<string | null>(null);
+  const [credSuccess, setCredSuccess] = useState<string | null>(null);
 
   // Main Tabs navigation state: REGISTRY | BEARERS | VERIFY
   const [activeTab, setActiveTab] = useState<'REGISTRY' | 'BEARERS' | 'VERIFY'>('REGISTRY');
@@ -950,6 +965,81 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Fetch current admin profile email
+  useEffect(() => {
+    fetch('/api/admin/credentials')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.admin?.email) {
+          setAdminEmail(d.admin.email);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Handle Admin Credentials (Email/Password) Update
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredError(null);
+    setCredSuccess(null);
+
+    if (!currentPassword) {
+      setCredError('Current password is required to save changes.');
+      return;
+    }
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setCredError('New password and Confirm password do not match.');
+      return;
+    }
+
+    if (newPassword && newPassword.length < 6) {
+      setCredError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (!newEmail?.trim() && !newPassword?.trim()) {
+      setCredError('Please enter a new email or a new password.');
+      return;
+    }
+
+    setCredSaving(true);
+    try {
+      const res = await fetch('/api/admin/credentials', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newEmail: newEmail.trim() !== adminEmail ? newEmail.trim() : undefined,
+          newPassword: newPassword.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCredError(data.error || 'Failed to update credentials.');
+        return;
+      }
+
+      setCredSuccess(data.message || 'Credentials updated successfully!');
+      if (data.email) {
+        setAdminEmail(data.email);
+      }
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+      setTimeout(() => {
+        setCredModalOpen(false);
+        setCredSuccess(null);
+      }, 1500);
+    } catch (err: any) {
+      setCredError(err?.message || 'Network error while updating credentials.');
+    } finally {
+      setCredSaving(false);
+    }
+  };
+
   // Dedicated Member Verification lookup inside Admin Portal
   const handleAdminVerifyLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1009,6 +1099,22 @@ export default function AdminDashboardPage() {
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-700 transition-all"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCredModalOpen(true);
+              setCredError(null);
+              setCredSuccess(null);
+              setCurrentPassword('');
+              setNewEmail(adminEmail || '');
+              setNewPassword('');
+              setConfirmPassword('');
+            }}
+            title="Change Login Email & Password"
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition-all active:scale-[0.98]"
+          >
+            <KeyRound className="w-3.5 h-3.5" /> Change Credentials
           </button>
           <button
             onClick={handleLogout}
@@ -2071,6 +2177,170 @@ export default function AdminDashboardPage() {
                   >
                     {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     {editSaving ? 'SAVING CHANGES...' : 'SAVE CORRECTIONS'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin Credentials (Email & Password) Settings Modal */}
+      <AnimatePresence>
+        {credModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-white border-2 border-stone-300 rounded-2xl shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-[#800000] via-[#A00000] to-[#800000] p-4 text-white flex justify-between items-center border-b-2 border-amber-400">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-white">Change Admin Credentials</h3>
+                    <p className="text-[11px] text-amber-200">Update login email/username and password</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCredModalOpen(false)}
+                  className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleUpdateCredentials} className="p-6 space-y-4">
+                {/* Current Email Badge */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
+                  <span className="text-[11px] text-amber-900 font-bold uppercase tracking-wider">
+                    Current Login Email:
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-900">
+                    {adminEmail || 'superadmin@tvkup.org'}
+                  </span>
+                </div>
+
+                {/* Error & Success Messages */}
+                {credError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-xs font-bold text-red-700">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{credError}</span>
+                  </div>
+                )}
+                {credSuccess && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2 text-xs font-bold text-emerald-700">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{credSuccess}</span>
+                  </div>
+                )}
+
+                {/* Current Password Field */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                    Current Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password to verify"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all pr-9 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword((s) => !s)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* New Email Field */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                    New Login Email / Username
+                  </label>
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="e.g. admin@tvkup.org"
+                    className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all font-mono"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">
+                    Leave unchanged if you only want to change the password.
+                  </span>
+                </div>
+
+                {/* New Password Field */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password (min. 6 characters)"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all pr-9 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((s) => !s)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-slate-500 mt-0.5 block">
+                    Leave blank if you only want to change the email.
+                  </span>
+                </div>
+
+                {/* Confirm New Password Field */}
+                {newPassword && (
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 rounded-lg px-3 py-2 text-xs outline-none transition-all font-mono"
+                    />
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-stone-200">
+                  <button
+                    type="button"
+                    disabled={credSaving}
+                    onClick={() => setCredModalOpen(false)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-950 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={credSaving}
+                    className="bg-[#A00000] hover:bg-[#800000] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider px-6 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-md active:scale-95"
+                  >
+                    {credSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    {credSaving ? 'SAVING...' : 'SAVE CREDENTIALS'}
                   </button>
                 </div>
               </form>
