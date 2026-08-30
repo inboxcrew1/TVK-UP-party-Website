@@ -188,10 +188,10 @@ export async function POST(req: Request) {
       smsConfirmation: smsMessage,
       isExisting: result.isExisting,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Direct member registration error:', err);
     return NextResponse.json(
-      { error: 'An unexpected database registration error occurred. Please try again.' },
+      { error: `Registration error: ${err?.message || String(err)}` },
       { status: 500 }
     );
   }
