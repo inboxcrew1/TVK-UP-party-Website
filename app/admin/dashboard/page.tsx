@@ -103,8 +103,15 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   // Main Tabs navigation state: REGISTRY | BEARERS | VERIFY
@@ -237,21 +244,40 @@ export default function AdminDashboardPage() {
     suspended: number;
   }>({ total: 0, active: 0, pending: 0, rejected: 0, suspended: 0 });
 
-  // Load authoritative members directly from production database
+  // Debounce search input to prevent rapid duplicate API requests while typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Load authoritative members directly from production database with server-side pagination & timeout
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     async function loadMembers(isBackground = false) {
       try {
-        if (!isBackground) setLoading(true);
+        if (!isBackground) {
+          setLoading(true);
+          setLoadError(null);
+        }
         const queryParams = new URLSearchParams();
+        queryParams.set('page', page.toString());
+        queryParams.set('pageSize', pageSize.toString());
         if (statusFilter !== 'ALL') {
           queryParams.set('status', statusFilter);
         }
         if (searchQuery.trim().length > 0) {
-          queryParams.set('search', searchQuery);
+          queryParams.set('search', searchQuery.trim());
         }
 
-        const res = await fetch(`/api/admin/members?${queryParams.toString()}`);
+        const res = await fetch(`/api/admin/members?${queryParams.toString()}`, {
+          signal: controller.signal,
+        });
 
         if (!active) return;
 
@@ -266,45 +292,52 @@ export default function AdminDashboardPage() {
           if (data.stats) {
             setDbStats(data.stats);
           }
+          if (data.pagination) {
+            setTotalPages(data.pagination.totalPages || 1);
+            setTotalRecords(data.pagination.totalRecords || 0);
+          }
+        } else {
+          setLoadError('Failed to load registered members.');
         }
-      } catch (err) {
-        console.error('Error loading admin members from database:', err);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          console.warn('Admin members fetch timed out.');
+          setLoadError('Request timed out. Please click Refresh to try again.');
+        } else {
+          console.error('Error loading admin members from database:', err);
+          setLoadError('Error loading members.');
+        }
       } finally {
+        clearTimeout(timeoutId);
         if (active && !isBackground) setLoading(false);
       }
     }
 
     loadMembers(false);
-    const interval = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        loadMembers(true);
-      }
-    }, 8000);
 
     return () => {
       active = false;
-      clearInterval(interval);
+      controller.abort();
     };
-  }, [statusFilter, searchQuery, reloadTrigger, router]);
+  }, [page, pageSize, statusFilter, searchQuery, reloadTrigger, router]);
 
-  // Load Office Bearers & Party Posts when tab is active or Appoint Modal opens
+  // Load Office Bearers & Party Posts ONLY when tab is active or Appoint Modal opens
   useEffect(() => {
     if (activeTab === 'BEARERS' || appointModalOpen) {
       loadBearersAndPosts();
     }
   }, [activeTab, appointModalOpen]);
 
+  // Load Master States ONLY when Appoint Bearer Modal opens
   useEffect(() => {
-    loadBearersAndPosts();
-  }, []);
-
-  useEffect(() => {
-    async function loadStates() {
-      const res = await fetch('/api/geo/states');
-      if (res.ok) setAppointStates(await res.json());
+    if (appointModalOpen && appointStates.length === 0) {
+      async function loadStates() {
+        const res = await fetch('/api/geo/states');
+        if (res.ok) setAppointStates(await res.json());
+      }
+      loadStates();
     }
-    loadStates();
-  }, []);
+  }, [appointModalOpen, appointStates.length]);
 
   useEffect(() => {
     if (!bearerStateId) {
@@ -436,42 +469,59 @@ export default function AdminDashboardPage() {
     XLSX.writeFile(workbook, `TVK-UP-Office-Bearers-Latest-${dateStr}.xlsx`);
   };
 
-  const handleExportExcel = () => {
-    if (members.length === 0) {
-      alert('No members available to export.');
-      return;
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (statusFilter !== 'ALL') queryParams.set('status', statusFilter);
+      if (searchQuery.trim().length > 0) queryParams.set('search', searchQuery.trim());
+
+      const res = await fetch(`/api/admin/members/export?${queryParams.toString()}`);
+      if (!res.ok) {
+        alert('Failed to export member records.');
+        return;
+      }
+      const json = await res.json();
+      const rows = json.rows || [];
+      if (rows.length === 0) {
+        alert('No members available to export.');
+        return;
+      }
+
+      const data = rows.map((r: any) => ({
+        'S.No.': r.sNo,
+        'Membership ID': r.membershipId,
+        'Full Name': sanitizeFormulaCell(r.fullName),
+        'Mobile Number': r.mobile,
+        'Email Address': r.email,
+        Gender: r.gender,
+        'Date of Birth': r.dob,
+        District: r.district,
+        'Assembly Constituency': r.assembly,
+        'Photo URL': r.photoUrl,
+        Status: r.status,
+        'Registration Date': r.joiningDate,
+        'Approved Date': r.approvedAt,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'TVK Registered Members');
+
+      // Auto-fit column widths
+      const colWidths = Object.keys(data[0] || {}).map((key) => ({
+        wch: Math.max(key.length, 18),
+      }));
+      worksheet['!cols'] = colWidths;
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `TVK-UP-All-Members-Latest-${dateStr}.xlsx`);
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      alert('Error exporting Excel sheet.');
+    } finally {
+      setIsExporting(false);
     }
-
-    const data = members.map((m, idx) => ({
-      'S.No.': idx + 1,
-      'Membership ID': m.membershipId || 'PENDING',
-      'Full Name': sanitizeFormulaCell(m.fullName),
-      'Mobile Number': m.mobile,
-      'Email Address': m.email || 'N/A',
-      Gender: m.gender,
-      'Date of Birth': m.dob ? new Date(m.dob).toLocaleDateString('en-IN') : 'N/A',
-      District: m.district?.name || 'N/A',
-      'Assembly Constituency': m.assembly?.name || 'N/A',
-      'Govt ID Type': m.documents[0]?.documentType || m.govtIdType || 'Aadhaar Card',
-      'Govt ID Number': m.documents[0]?.documentNo || m.govtIdNumber || 'XXXX-XXXX-XXXX',
-      'Govt Document URL': m.documents[0]?.fileUrl || 'Not Uploaded',
-      'Photo URL': m.photoUrl || 'N/A',
-      Status: m.status,
-      'Registration Date': new Date(m.joiningDate).toLocaleDateString('en-IN'),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'TVK Registered Members');
-
-    // Auto-fit column widths
-    const colWidths = Object.keys(data[0] || {}).map((key) => ({
-      wch: Math.max(key.length, 18),
-    }));
-    worksheet['!cols'] = colWidths;
-
-    const dateStr = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(workbook, `TVK-UP-All-Members-Latest-${dateStr}.xlsx`);
   };
 
   const handleDownloadTemplate = () => {
@@ -899,7 +949,10 @@ export default function AdminDashboardPage() {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setStatusFilter(tab.id)}
+                    onClick={() => {
+                      setStatusFilter(tab.id);
+                      setPage(1);
+                    }}
                     className={`text-xs font-semibold px-3.5 py-1.5 rounded-md whitespace-nowrap transition-all ${
                       statusFilter === tab.id
                         ? 'bg-[#A00000] text-slate-950 shadow-md font-bold'
@@ -917,8 +970,8 @@ export default function AdminDashboardPage() {
                   <input
                     type="text"
                     placeholder="Search name, phone, email, ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     className="w-full bg-stone-50 border border-stone-300 focus:border-[#A00000] text-slate-900 font-medium rounded-lg pl-10 pr-4 py-2 text-xs transition-all outline-none"
                   />
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
@@ -927,10 +980,16 @@ export default function AdminDashboardPage() {
                 {/* PROMINENT DOWNLOAD EXCEL BUTTON */}
                 <button
                   onClick={handleExportExcel}
+                  disabled={isExporting}
                   title="Download All Member Data to Excel Sheet"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all active:scale-[0.98] border border-emerald-400/30"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all active:scale-[0.98] border border-emerald-400/30 disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4" /> Download Excel
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  {isExporting ? 'Exporting...' : 'Download Excel'}
                 </button>
 
                 {/* Import Action */}
@@ -950,6 +1009,17 @@ export default function AdminDashboardPage() {
                 <div className="py-20 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
                   <p className="text-slate-800 text-xs font-bold">Loading registered members...</p>
+                </div>
+              ) : loadError ? (
+                <div className="py-16 text-center">
+                  <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+                  <h4 className="font-bold text-slate-800 text-sm">{loadError}</h4>
+                  <button
+                    onClick={() => setReloadTrigger((prev) => prev + 1)}
+                    className="mt-3 bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : members.length === 0 ? (
                 <div className="py-20 text-center">
@@ -1142,6 +1212,36 @@ export default function AdminDashboardPage() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Server-Side Pagination Controls */}
+              {!loading && !loadError && members.length > 0 && (
+                <div className="px-6 py-4 bg-stone-50 border-t border-stone-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-xs text-slate-600 font-medium">
+                    Showing <span className="font-bold text-slate-900">{(page - 1) * pageSize + 1}</span> to{' '}
+                    <span className="font-bold text-slate-900">{Math.min(page * pageSize, totalRecords)}</span> of{' '}
+                    <span className="font-bold text-slate-900">{totalRecords}</span> registered members
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                      className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-slate-700 bg-white hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs font-bold text-slate-700 px-2 bg-stone-200/60 py-1 rounded-md">
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={page >= totalPages}
+                      className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-slate-700 bg-white hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

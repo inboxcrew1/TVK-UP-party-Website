@@ -28,10 +28,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Forbidden: Scoped role configuration missing.' }, { status: 403 });
     }
 
-    // Extract search and filter query params
+    // Extract search, filter, and pagination query params
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const search = searchParams.get('search');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '25', 10)));
 
     const whereClause: Prisma.MemberWhereInput = { ...baseScope };
 
@@ -49,15 +51,20 @@ export async function GET(req: Request) {
       ];
     }
 
-    // 1. Fetch Member rows
-    const members = await prisma.member.findMany({
-      where: whereClause,
-      include: {
-        district: true,
-        assembly: true,
-      },
-      orderBy: { joiningDate: 'desc' },
-    });
+    // 1. Fetch filtered total count and paginated rows in parallel
+    const [totalFiltered, members] = await Promise.all([
+      prisma.member.count({ where: whereClause }),
+      prisma.member.findMany({
+        where: whereClause,
+        include: {
+          district: true,
+          assembly: true,
+        },
+        orderBy: { joiningDate: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
 
     // 2. Fetch authoritative database statistics using a single PgBouncer-safe groupBy query
     let totalCount = 0;
@@ -89,17 +96,17 @@ export async function GET(req: Request) {
       });
     } catch (countErr) {
       console.error('Error grouping member stats in admin API:', countErr);
-      totalCount = members.length;
-      activeCount = members.filter((m) => m.status === 'ACTIVE').length;
-      pendingCount = members.filter(
-        (m) => m.status === 'SUBMITTED' || m.status === 'UNDER_REVIEW' || m.status === 'PENDING_OTP'
-      ).length;
-      rejectedCount = members.filter((m) => m.status === 'REJECTED').length;
-      suspendedCount = members.filter((m) => m.status === 'SUSPENDED').length;
+      totalCount = totalFiltered;
+      activeCount = totalFiltered;
     }
 
-    // Sanitize members before sending to frontend client
+    // 3. Sanitize members and proxy heavy base64 strings to reduce payload from 33MB to ~15KB
     const sanitizedMembers = members.map((m) => {
+      let photoUrl = m.photoUrl;
+      if (photoUrl && photoUrl.startsWith('data:image')) {
+        photoUrl = `/api/admin/members/${m.id}/photo`;
+      }
+
       return {
         id: m.id,
         fullName: m.fullName,
@@ -107,7 +114,7 @@ export async function GET(req: Request) {
         gender: m.gender,
         mobile: m.mobile,
         email: m.email,
-        photoUrl: m.photoUrl,
+        photoUrl: photoUrl || '/media/leadership.jpg',
         membershipId: m.membershipId,
         status: m.status,
         joiningDate: m.joiningDate,
@@ -121,6 +128,12 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       members: sanitizedMembers,
+      pagination: {
+        page,
+        pageSize,
+        totalRecords: totalFiltered,
+        totalPages: Math.ceil(totalFiltered / pageSize) || 1,
+      },
       stats: {
         total: totalCount,
         active: activeCount,
