@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest, checkAdminScope } from '../../../../../lib/auth';
-import { prisma, ensureSequenceTrackingTable } from '../../../../../lib/prisma';
+import { prisma } from '../../../../../lib/prisma';
 import { invalidateMemberStatsCache } from '../../../../../server/memberStats';
 
 export const dynamic = 'force-dynamic';
@@ -242,7 +242,6 @@ export async function DELETE(
       const seqNum = parseInt(member.membershipId.replace(/\D/g, ''), 10);
       if (!isNaN(seqNum)) {
         try {
-          await ensureSequenceTrackingTable();
           const seqRecord = await prisma.membershipCount.findFirst({
             where: { scopeType: 'SEQUENCE', scopeId: 'TVK-UP' },
           });

@@ -46,7 +46,7 @@ export default function LiveMemberCounter({
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         fetchRealDatabaseCount();
       }
-    }, 6000);
+    }, 60000); // 60s — prevents DB overload from concurrent page visitors
 
     return () => {
       isMounted = false;

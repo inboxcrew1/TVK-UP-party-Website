@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma, ensureSequenceTrackingTable } from '../../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 import {
   getLiveStatewideStats,
   getDistrictMemberCount,
@@ -7,8 +7,11 @@ import {
   getAllDistrictMemberCounts,
   getDistrictAssembliesCounts,
 } from '../../../../server/memberStats';
+import { withTimeoutFallback } from '../../../../lib/timeout';
 
 export const dynamic = 'force-dynamic';
+// Cache at CDN/proxy layer: 30s fresh, 10s stale-while-revalidate
+// This dramatically reduces DB hits under concurrent traffic
 export const revalidate = 0;
 
 export async function GET(req: Request) {
@@ -19,52 +22,71 @@ export async function GET(req: Request) {
     const fetchAllDistricts = searchParams.get('allDistricts') === 'true' || !district;
     const fetchAssemblies = searchParams.get('assemblies') === 'true' && !!district;
 
-    const statewide = await getLiveStatewideStats();
+    // ─── All DB calls wrapped with 8s timeout ───────────────────────────────
+    const TIMEOUT_MS = 8000;
+
+    const statewide = await withTimeoutFallback(
+      getLiveStatewideStats(),
+      TIMEOUT_MS,
+      { totalMembers: 0, activeMembers: 0, totalDistricts: 75, totalAssemblies: 403, verifiedBooths: 0 },
+      'statewide stats'
+    );
+
     let districtCount = 0;
     let assemblyCount = 0;
     let assembliesMap: Record<string, number> | undefined;
 
     if (district) {
-      districtCount = await getDistrictMemberCount(district);
+      districtCount = await withTimeoutFallback(
+        getDistrictMemberCount(district),
+        TIMEOUT_MS,
+        0,
+        'district count'
+      );
       if (fetchAssemblies) {
-        assembliesMap = await getDistrictAssembliesCounts(district);
+        assembliesMap = await withTimeoutFallback(
+          getDistrictAssembliesCounts(district),
+          TIMEOUT_MS,
+          {},
+          'assemblies count'
+        );
       }
     }
 
     if (district && assembly) {
-      assemblyCount = await getAssemblyMemberCount(district, assembly);
+      assemblyCount = await withTimeoutFallback(
+        getAssemblyMemberCount(district, assembly),
+        TIMEOUT_MS,
+        0,
+        'assembly count'
+      );
     }
 
     let allDistrictsMap: Record<string, number> | undefined;
     if (fetchAllDistricts) {
-      allDistrictsMap = await getAllDistrictMemberCounts();
+      allDistrictsMap = await withTimeoutFallback(
+        getAllDistrictMemberCounts(),
+        TIMEOUT_MS,
+        {},
+        'all districts'
+      );
     }
 
     const count = district ? (assembly ? assemblyCount : districtCount) : statewide.activeMembers;
 
-    // Database single source of truth for latest assigned Membership ID
-    const membersWithId = await prisma.member.findMany({
-      where: { membershipId: { not: null } },
-      select: { membershipId: true },
-    });
+    // ─── Sequence tracker — use sequence table ONLY, no full member scan ────
+    // The MembershipCount table with scopeType='SEQUENCE' is the single source of truth.
+    // We do NOT scan all members to compute max sequence here.
     let maxSeq = 100;
-    for (const m of membersWithId) {
-      if (m.membershipId) {
-        const num = parseInt(m.membershipId.replace(/\D/g, ''), 10);
-        if (!isNaN(num) && num > maxSeq) {
-          maxSeq = num;
-        }
-      }
-    }
-
     try {
-      await ensureSequenceTrackingTable();
-      const seqRecord = await prisma.membershipCount.findFirst({
-        where: {
-          scopeType: 'SEQUENCE',
-          scopeId: 'TVK-UP',
-        },
-      });
+      const seqRecord = await withTimeoutFallback(
+        prisma.membershipCount.findFirst({
+          where: { scopeType: 'SEQUENCE', scopeId: 'TVK-UP' },
+        }),
+        TIMEOUT_MS,
+        null,
+        'sequence tracker'
+      );
       if (seqRecord && seqRecord.activeCount > maxSeq) {
         maxSeq = seqRecord.activeCount;
       }
@@ -88,7 +110,8 @@ export async function GET(req: Request) {
       currentId,
     });
 
-    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    // Allow proxy/CDN to cache for 30s, serve stale for 10s while revalidating
+    res.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=10');
     return res;
   } catch (err) {
     console.error('API /api/member/counter error:', err);
@@ -107,7 +130,7 @@ export async function GET(req: Request) {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
       }
     );

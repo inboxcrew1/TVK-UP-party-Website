@@ -1,4 +1,29 @@
+// In-memory sliding window rate limiter with automatic expired-entry cleanup
+// Prevents unbounded Map growth (memory leak) that caused GC pressure and OOM restarts
+
 const hitMap = new Map<string, number[]>();
+
+// Cleanup expired entries every 5 minutes to prevent unbounded memory growth
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+if (typeof setInterval !== 'undefined') {
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [key, timestamps] of hitMap.entries()) {
+      // Remove entries where ALL timestamps are older than 15 minutes
+      const recentTimestamps = timestamps.filter((ts) => ts > now - 15 * 60 * 1000);
+      if (recentTimestamps.length === 0) {
+        hitMap.delete(key);
+      } else {
+        hitMap.set(key, recentTimestamps);
+      }
+    }
+  }, CLEANUP_INTERVAL_MS);
+
+  // Allow Node.js to exit without waiting for this timer
+  if (typeof cleanupTimer === 'object' && cleanupTimer.unref) {
+    cleanupTimer.unref();
+  }
+}
 
 /**
  * Checks if a given key (e.g. client IP or identifier) has exceeded the max allowed hits

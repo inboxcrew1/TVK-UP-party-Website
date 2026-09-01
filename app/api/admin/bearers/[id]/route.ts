@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminFromRequest, checkAdminScope } from '../../../../../lib/auth';
-import { prisma, ensureOfficeBearerTable } from '../../../../../lib/prisma';
+import { prisma } from '../../../../../lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,8 +14,6 @@ export async function GET(
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized session.' }, { status: 401 });
     }
-
-    await ensureOfficeBearerTable();
 
     const { id } = await params;
     if (!id) {
@@ -78,8 +76,6 @@ async function handleUpdate(
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized session.' }, { status: 401 });
     }
-
-    await ensureOfficeBearerTable();
 
     const { id } = await paramsPromise;
     if (!id) {
@@ -190,8 +186,6 @@ export async function DELETE(
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized session.' }, { status: 401 });
     }
-
-    await ensureOfficeBearerTable();
 
     const { id } = await params;
     if (!id) {

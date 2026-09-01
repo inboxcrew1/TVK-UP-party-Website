@@ -22,7 +22,7 @@ interface CacheStore {
 }
 
 let memoryCache: CacheStore | null = null;
-const CACHE_TTL_MS = 3000; // 3 seconds TTL
+const CACHE_TTL_MS = 30000; // 30 seconds TTL — reduces DB hits by 10x under concurrent load
 
 /**
  * Instantly invalidate cache when new registrations or status changes occur

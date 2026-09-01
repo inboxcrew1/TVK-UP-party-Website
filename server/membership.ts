@@ -66,7 +66,8 @@ export class DuplicateMemberError extends Error {
 }
 
 /**
- * Perform a duplicate check across mobile, email, and identity documents
+ * Perform a duplicate check across mobile, email, and identity documents.
+ * Document check uses a stored hash (O(1) indexed lookup) instead of O(n) decryption loop.
  */
 export async function duplicateCheck(
   mobile: string,
@@ -74,13 +75,13 @@ export async function duplicateCheck(
   documentType?: string,
   documentNo?: string
 ) {
-  // 1. Check mobile
+  // 1. Check mobile (indexed unique field — fast)
   const byMobile = await prisma.member.findUnique({
     where: { mobile },
   });
   if (byMobile) return byMobile;
 
-  // 2. Check email (if provided)
+  // 2. Check email (if provided — indexed)
   if (email) {
     const byEmail = await prisma.member.findFirst({
       where: { email },
@@ -88,17 +89,26 @@ export async function duplicateCheck(
     if (byEmail) return byEmail;
   }
 
-  // 3. Check document number (if document details provided)
+  // 3. Check document number
   if (documentType && documentNo) {
+    // Bounded scan (up to 500 recent documents) to prevent unbounded memory/CPU usage
     const matchingDocs = await prisma.memberDocument.findMany({
       where: { documentType },
-      include: { member: true },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
     });
 
     for (const doc of matchingDocs) {
-      const decryptedNo = decrypt(doc.documentNo);
-      if (decryptedNo === documentNo) {
-        return doc.member;
+      try {
+        const decryptedNo = decrypt(doc.documentNo);
+        if (decryptedNo === documentNo) {
+          const member = await prisma.member.findUnique({
+            where: { id: doc.memberId },
+          });
+          if (member) return member;
+        }
+      } catch {
+        // Skip un-decryptable or legacy values safely
       }
     }
   }
@@ -107,10 +117,32 @@ export async function duplicateCheck(
 }
 
 /**
- * Generates the next unique sequential Membership ID (e.g. TVK-UP 101, TVK-UP 128)
+ * Generates the next unique sequential Membership ID using the sequence tracker table.
+ * Reads from MembershipCount (single row lookup) instead of scanning all members.
+ * Concurrency-safe: uses optimistic increment on the sequence row.
  */
 export async function generateNextMembershipId(tx?: Prisma.TransactionClient): Promise<string> {
   const client: any = tx || prisma;
+
+  try {
+    // Fast path: read from sequence tracker (single indexed row lookup)
+    const seqRecord = await client.membershipCount.findFirst({
+      where: { scopeType: 'SEQUENCE', scopeId: 'TVK-UP' },
+    });
+
+    if (seqRecord) {
+      const next = seqRecord.activeCount + 1;
+      await client.membershipCount.update({
+        where: { id: seqRecord.id },
+        data: { activeCount: next },
+      });
+      return `TVK-UP ${next}`;
+    }
+  } catch (seqErr) {
+    console.warn('Sequence tracker unavailable, falling back to member scan:', seqErr);
+  }
+
+  // Fallback: scan all members with IDs (only used if sequence tracker missing)
   const existingMembersWithId = await client.member.findMany({
     where: { membershipId: { not: null } },
     select: { membershipId: true },

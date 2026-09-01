@@ -32,7 +32,7 @@ export default function Home() {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         fetchLiveStats();
       }
-    }, 6000);
+    }, 60000); // 60s polling — prevents DB overload from concurrent visitors
     return () => clearInterval(interval);
   }, []);
 

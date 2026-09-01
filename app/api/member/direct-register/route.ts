@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma, ensureSequenceTrackingTable } from '../../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 import { getConstituenciesByDistrict } from '../../../../lib/upConstituencies';
 import { invalidateMemberStatsCache } from '../../../../server/memberStats';
 
@@ -163,7 +163,6 @@ function calculateAgeAndFormatDob(dateVal: Date | string | null | undefined, fal
     // Also check permanent historical sequence tracker so deleted IDs are NEVER reused
     let seqRecord: any = null;
     try {
-      await ensureSequenceTrackingTable();
       seqRecord = await prisma.membershipCount.findFirst({
         where: {
           scopeType: 'SEQUENCE',

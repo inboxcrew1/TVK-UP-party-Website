@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { prisma, ensureCmsTables } from '../../../../lib/prisma';
+import { prisma } from '../../../../lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
-    await ensureCmsTables();
 
     const { searchParams } = new URL(req.url);
     const districtId = searchParams.get('districtId');

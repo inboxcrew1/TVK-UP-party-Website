@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { prisma, ensureAdminSecurityLockdown, AUTHORIZED_ADMIN_EMAIL } from '../../../../lib/prisma';
+import { prisma, AUTHORIZED_ADMIN_EMAIL } from '../../../../lib/prisma';
 import { comparePassword, hashPassword, signToken } from '../../../../lib/auth';
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit';
 import { sendAdminOtpEmail } from '../../../../lib/email';
@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    // 1. Ensure high-security lockdown & tables exist
-    await ensureAdminSecurityLockdown();
-
-    // 2. Strict Rate Limiting: Max 5 attempts per 10 minutes per IP
+    // Rate Limiting: Max 5 attempts per 10 minutes per IP
     const ip = getClientIp(req);
     const rateCheck = checkRateLimit(`login_${ip}`, 5, 10 * 60 * 1000);
     if (!rateCheck.allowed) {

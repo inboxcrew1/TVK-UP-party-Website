@@ -23,8 +23,11 @@ function getSmtpTransport() {
       port,
       secure,
       auth: { user, pass },
+      connectionTimeout: 5000,  // 5s — prevents hanging SMTP connections
+      socketTimeout: 8000,      // 8s — prevents stuck socket from blocking login
+      greetingTimeout: 5000,
       tls: {
-        rejectUnauthorized: false, // Prevents self-signed or proxy TLS rejections
+        rejectUnauthorized: false,
       },
     });
   }
@@ -162,13 +165,18 @@ export async function sendAdminOtpEmail(toEmail: string, otp: string): Promise<S
 
   try {
     const transporter = getSmtpTransport();
+
+    // Hard 10s timeout: login must not hang waiting for SMTP
+    const EMAIL_TIMEOUT_MS = 10000;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Email send timeout after 10s')), EMAIL_TIMEOUT_MS)
+    );
+
     if (transporter) {
-      const info = await transporter.sendMail({
-        from: fromAddress,
-        to: toEmail,
-        subject,
-        html,
-      });
+      const info = await Promise.race([
+        transporter.sendMail({ from: fromAddress, to: toEmail, subject, html }),
+        timeoutPromise,
+      ]);
       console.log(`Email dispatched successfully via SMTP. MessageId: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
     }
